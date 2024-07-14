@@ -4,16 +4,16 @@ import me.redstoner2019.fnaf.game.animatronics.Bonnie;
 import me.redstoner2019.fnaf.game.animatronics.Chica;
 import me.redstoner2019.fnaf.game.animatronics.Freddy;
 
-public class OfficeCamera extends Camera {
-    private static OfficeCamera INSTANCE;
+public class InOfficeCamera extends Camera {
+    private static InOfficeCamera INSTANCE;
 
-    private OfficeCamera() {
+    private InOfficeCamera() {
 
     }
 
-    public static OfficeCamera getInstance() {
+    public static InOfficeCamera getInstance() {
         if (INSTANCE == null) {
-            INSTANCE = new OfficeCamera();
+            INSTANCE = new InOfficeCamera();
         }
         return INSTANCE;
     }

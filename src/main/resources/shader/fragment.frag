@@ -34,7 +34,20 @@ void main() {
 
     vec4 recoloredColor = textureColor * vec4(color,0);
 
-    vec4 randomColor = vec4(random(vec2(seed,seed+1) + txc),random(vec2(seed,seed+2) + txc),random(vec2(seed,seed+3) + txc),random(vec2(seed,seed+4) + txc));
+    int pixelsX = 200;
+    int pixelsY = 200;
+
+    vec2 pixelSeed1 = vec2(floor(textureCoord.x * pixelsX) + seed,floor(textureCoord.y * pixelsY) + seed);
+    vec2 pixelSeed2 = vec2(floor(textureCoord.x * pixelsX) + seed,floor(textureCoord.y * pixelsY) + seed);
+    vec2 pixelSeed3 = vec2(floor(textureCoord.x * pixelsX) + seed,floor(textureCoord.y * pixelsY) + seed);
+    vec2 pixelSeed4 = vec2(floor(textureCoord.x * pixelsX) + seed,floor(textureCoord.y * pixelsY) + seed);
+
+    /*vec2 pixelSeed1 = vec2(seed);
+    vec2 pixelSeed2 = vec2(seed);
+    vec2 pixelSeed3 = vec2(seed);
+    vec2 pixelSeed4 = vec2(seed);*/
+
+    vec4 randomColor = vec4(random(pixelSeed1),random(pixelSeed2),random(pixelSeed3),random(pixelSeed4));
 
     if(textureColor.a == 0) {
         //is transparent pixel

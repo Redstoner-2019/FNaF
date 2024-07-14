@@ -18,7 +18,7 @@ public abstract class Animatronic {
         this.AI_LEVEL = AI_LEVEL;
     }
 
-    public abstract void movementOpportunity();
+    public abstract void move();
 
     public Camera getCurrentCamera() {
         return currentCamera;

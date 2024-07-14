@@ -2,6 +2,7 @@ package me.redstoner2019.fnaf.game.cameras;
 
 import me.redstoner2019.fnaf.game.animatronics.Bonnie;
 import me.redstoner2019.fnaf.game.animatronics.Chica;
+import me.redstoner2019.fnaf.game.animatronics.Foxy;
 import me.redstoner2019.fnaf.game.animatronics.Freddy;
 
 public class Camera2A extends Camera {
@@ -17,12 +18,15 @@ public class Camera2A extends Camera {
     }
 
     @Override
-    public String getImage(int cameraRandomness) {
+    public String getImage(int cameraRandomness, int cameraRandomness2) {
         String name = "w.hall.";
         if(Bonnie.getInstance().getCurrentCamera().equals(this)) name += "bonnie.";
         if(name.equals("w.hall.")) name+="empty.";
-        if(name.equals("w.hall.empty.") && cameraRandomness <= 20) name+="light.";
+        if(name.equals("w.hall.empty.") && cameraRandomness > 5) name+="light.";
         name+="png";
+        if(Foxy.getInstance().getRun_animation_image() != -1 && Foxy.getInstance().getRun_animation_image() <= 30) {
+            name = "foxy.run." + Foxy.getInstance().getRun_animation_image() + ".png";
+        }
         return name;
     }
 

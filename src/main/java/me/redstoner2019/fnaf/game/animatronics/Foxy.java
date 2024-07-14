@@ -1,20 +1,28 @@
 package me.redstoner2019.fnaf.game.animatronics;
 
 import me.redstoner2019.fnaf.FNAFMain;
-import me.redstoner2019.fnaf.Menu;
-import me.redstoner2019.fnaf.game.DoorState;
-import me.redstoner2019.fnaf.game.Office;
 import me.redstoner2019.fnaf.game.cameras.Camera1C;
-
-import java.util.Random;
 
 public class Foxy extends Animatronic{
     private static Foxy INSTANCE;
     private int stage = 0;
     private long stalledUntil = 0;
+    private int powerDrain = 1;
+    private long leftCove = -1;
+    private int run_animation_image = -1;
+
+    public long stillStalledFor(){
+        long time = getStalledUntil() - System.currentTimeMillis();
+        if(time < 0) time = 0;
+        return time;
+    }
 
     public void setStalledUntil(long stalledUntil) {
         this.stalledUntil = stalledUntil;
+    }
+
+    public long getStalledUntil() {
+        return stalledUntil;
     }
 
     public int getStage() {
@@ -30,16 +38,36 @@ public class Foxy extends Animatronic{
         this.stage = stage;
     }
 
+    public int getRun_animation_image() {
+        return run_animation_image;
+    }
+
+    public void setRun_animation_image(int run_animation_image) {
+        this.run_animation_image = run_animation_image;
+    }
+
+    public void setPowerDrain(int powerDrain) {
+        this.powerDrain = powerDrain;
+    }
+
+    public int getPowerDrain() {
+        return powerDrain;
+    }
+
     @Override
-    public void movementOpportunity() {
-        if(System.currentTimeMillis() < stalledUntil) return;
-        Random random = new Random();
-        int roll = random.nextInt(19) + 1;
-        System.out.println("Foxy rolled " + roll + " ai " + getAI_LEVEL());
-        if(roll <= getAI_LEVEL()){
-            stage++;
-            if(stage == 4) stage = 3;
+    public void move() {
+        if(stillStalledFor() > 0) return;
+        stage++;
+        if(stage == 4) stage = 3;
+        else FNAFMain.fnafMain.glitchStrength = 1;
+        /*if(stage == 3 && leftCove == -1) {
+            leftCove = System.currentTimeMillis();
+            System.out.println("Foxy Left Cove");
         }
+        if(stage == 3 && System.currentTimeMillis() - leftCove > 10000) {
+            startRun(FNAFMain.fnafMain);
+            FNAFMain.sounds.get("FoxyRun.ogg").play();
+        }*/
     }
 
     public static Foxy getInstance() {
@@ -49,6 +77,7 @@ public class Foxy extends Animatronic{
         return INSTANCE;
     }
     public void startRun(FNAFMain main){
+        /*leftCove = -1;
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -66,11 +95,15 @@ public class Foxy extends Animatronic{
                 } else {
                     FNAFMain.sounds.get("FoxyKnock.ogg").play();
                     Random random = new Random();
-                    stage = random.nextInt(2)-1;
-                    if(stage < 0) stage = 0;
+                    gameManager.power-=powerDrain;
+                    gam
+                    if(powerDrain == 6) powerDrain = 11;
+                    if(powerDrain == 1) powerDrain = 6;
+                    stage = random.nextInt(2);
+                    System.out.println("Foxy returned to stage " + stage);
                 }
             }
-        });
-        t.start();
+        });*/
+        //t.start();
     }
 }

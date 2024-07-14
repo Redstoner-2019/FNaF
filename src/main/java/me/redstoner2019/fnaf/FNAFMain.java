@@ -1,6 +1,5 @@
 package me.redstoner2019.fnaf;
 
-import me.redstoner2019.Main;
 import me.redstoner2019.audio.Sound;
 import me.redstoner2019.audio.SoundManager;
 import me.redstoner2019.fnaf.game.DoorState;
@@ -10,27 +9,18 @@ import me.redstoner2019.fnaf.game.animatronics.Chica;
 import me.redstoner2019.fnaf.game.animatronics.Foxy;
 import me.redstoner2019.fnaf.game.animatronics.Freddy;
 import me.redstoner2019.fnaf.game.cameras.*;
+import me.redstoner2019.fnaf.game.game.GameManager;
 import me.redstoner2019.graphics.Renderer;
 import me.redstoner2019.graphics.general.Texture;
 import org.json.JSONObject;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWFramebufferSizeCallback;
-import org.lwjgl.glfw.GLFWKeyCallback;
+import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryUtil;
 
+import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.*;
 import java.util.*;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
@@ -43,7 +33,7 @@ public class FNAFMain {
     public static int width = 1280;
     public static int height = 720;
     public static float aspectRatio;
-    private boolean showDebug = true;
+    private boolean showDebug = false;
     private HashMap<String,Texture> textures = new HashMap<>();
     public static HashMap<String, Sound> sounds = new HashMap<>();
     private Renderer renderer;
@@ -52,27 +42,20 @@ public class FNAFMain {
     private boolean isMouseClicked = false;
     public Menu menu = Menu.MAIN_MENU;
     private float deltaTime = 1;
-    private int nightNumber = 0;
+    public int nightNumber = 1;
     private SoundManager soundManager;
     private float scroll = 0f;
-    private Camera currentCamera = Camera1A.getInstance();
     private int cameraRandomness = 0;
+    private int cameraRandomness2 = 0;
     private Random random = new Random();
     private String jumpscare = null;
     private int jumpscareLength = 0;
     private int jumpscareFrame = 0;
     public static FNAFMain fnafMain;
-    public boolean nightRunning = false;
-
-    private double idleUsage =.0025;
-    private double power = 100;
-    private boolean blackout = false;
-    private long blackoutStart = 0;
-    private long songStart = 0;
-    private long songEnd = 0;
-    private long stepStart = 0;
-    private long stepEnd = 0;
-    private boolean hasDoneBlackoutJumpscare = false;
+    public GameManager gameManager = GameManager.getInstance();
+    boolean fullscreen = false;
+    private static final float defaultGlitchStrength = .2f;
+    public float glitchStrength = defaultGlitchStrength;
 
     public FNAFMain() {
         fnafMain = this;
@@ -129,13 +112,25 @@ public class FNAFMain {
                 if (key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE) {
                     glfwSetWindowShouldClose(window, true);
                 }
-                if (key == GLFW_KEY_F3 && action == GLFW_RELEASE) {
-                    showDebug = !showDebug;
-                }
                 if (key == GLFW_KEY_F1 && action == GLFW_RELEASE) {
                     menu = Menu.OFFICE;
                 }
-                if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE) {
+                if (key == GLFW_KEY_F2 && action == GLFW_RELEASE) {
+                    gameManager.setNightStart(System.currentTimeMillis() - GameManager.NIGHT_LENGTH - 100);
+                }
+                if (key == GLFW_KEY_F3 && action == GLFW_RELEASE) {
+                    showDebug = !showDebug;
+                }
+                if (key == GLFW_KEY_F11 && action == GLFW_RELEASE) {
+                    toggleFullscreen();
+                }
+                if (key == GLFW_KEY_KP_0 && action == GLFW_RELEASE) {
+                    gameManager.setPower(1);
+                }
+                if (key == GLFW_KEY_KP_1 && action == GLFW_RELEASE) {
+                    gameManager.setPower(100);
+                }
+                if (key == GLFW_KEY_J && action == GLFW_RELEASE) {
                     switch (random.nextInt(5)) {
                         case 0 : {
                             jumpscare = "bonnie.jump.";
@@ -189,16 +184,13 @@ public class FNAFMain {
             if (action == GLFW.GLFW_PRESS) {
                 isMouseClicked = true;
 
-                //renderer.renderTexture((scroll * 0.25f)+1.1f,-0.385f,w*0.6f,h,textures.get(textureRight),true,false,0);
-                //renderer.renderTexture((scroll * 0.25f)-1.25f,-0.385f,w*0.6f,h,textures.get(textureLeft),true,false,0);
-
                 float mx = (float) ((mouseX[0] / width) * 2) - 1;
                 float my = (float) ((mouseY[0] / height) * 2) - 1;
 
                 Office office = Office.getInstance();
 
                 if(menu == Menu.OFFICE) {
-                    if(!blackout) {
+                    if(!gameManager.isPowerout()) {
                         mx-=scroll;
                         if(between(-1.9f,-1.95f,mx) && between(-0.5,0.05,my)){
                             if(office.isLeftDoor()) {
@@ -226,6 +218,13 @@ public class FNAFMain {
                             } else {
                                 sounds.get("lights.ogg").stop();
                             }
+                        }
+
+                        System.out.println((mx * scroll) + " " + my);
+
+                        if(between(-.2 + scroll,-.17,mx + (scroll * .75f)) && between(-.355,-.330,my)){
+                            sounds.get("honk.ogg").stop();
+                            sounds.get("honk.ogg").play();
                         }
 
                         if(between(1.87f,1.93f,mx) && between(-0.5,0.05,my)){
@@ -256,88 +255,83 @@ public class FNAFMain {
                             }
                         }
                     } else {
-                        sounds.get("blip.ogg").play();
+                        sounds.get("error.ogg").play();
                     }
 
                 } else if (menu == Menu.CAMERAS){
-                    //System.out.println(mx + " " + my);
                     my = my*-1;
                     float x = .625f;
                     float y = -.225f;
                     if(between(x,x + 0.075f,mx) && between(y,y + 0.075f,my)){
-                        currentCamera = Camera1A.getInstance();
-                        cameraRandomness = random.nextInt(100);
+                        if(!gameManager.getCamera().equals(Camera1A.getInstance())) cameraRandomness2 = random.nextInt(101);
+                        gameManager.setCamera(Camera1A.getInstance());
                     }
 
                     x = .6f;
                     y = -.35f;
                     if(between(x,x + 0.075f,mx) && between(y,y + 0.075f,my)){
-                        currentCamera = Camera1B.getInstance();
-                        cameraRandomness = random.nextInt(100);
+                        if(!gameManager.getCamera().equals(Camera1B.getInstance())) cameraRandomness2 = random.nextInt(101);
+                        gameManager.setCamera(Camera1B.getInstance());
                     }
 
                     x = .47f;
                     y = -.42f;
                     if(between(x,x + 0.075f,mx) && between(y,y + 0.075f,my)){
-                        currentCamera = Camera5.getInstance();
-                        cameraRandomness = random.nextInt(100);
+                        if(!gameManager.getCamera().equals(Camera5.getInstance())) cameraRandomness2 = random.nextInt(101);
+                        gameManager.setCamera(Camera5.getInstance());
                     }
 
                     x = .57f;
                     y = -.525f;
                     if(between(x,x + 0.075f,mx) && between(y,y + 0.075f,my)){
-                        currentCamera = Camera1C.getInstance();
-                        cameraRandomness = random.nextInt(100);
+                        if(!gameManager.getCamera().equals(Camera1C.getInstance())) cameraRandomness2 = random.nextInt(101);
+                        gameManager.setCamera(Camera1C.getInstance());
                     }
 
                     x = .52f;
                     y = -.75f;
                     if(between(x,x + 0.075f,mx) && between(y,y + 0.075f,my)){
-                        currentCamera = Camera3.getInstance();
-                        cameraRandomness = random.nextInt(100);
+                        if(!gameManager.getCamera().equals(Camera3.getInstance())) cameraRandomness2 = random.nextInt(101);
+                        gameManager.setCamera(Camera3.getInstance());
                     }
 
                     x = .625f;
                     y = -.82f;
                     if(between(x,x + 0.075f,mx) && between(y,y + 0.075f,my)){
-                        currentCamera = Camera2A.getInstance();
-                        cameraRandomness = random.nextInt(100);
-                        if(Foxy.getInstance().getStage() == 3){
-                            Foxy.getInstance().startRun(this);
-                            triggerJumpScare("foxy.run.",30,false);
-                        }
+                        if(!gameManager.getCamera().equals(Camera2A.getInstance())) cameraRandomness2 = random.nextInt(101);
+                        gameManager.setCamera(Camera2A.getInstance());
                     }
 
                     y = -.9f;
                     if(between(x,x + 0.075f,mx) && between(y,y + 0.075f,my)){
-                        currentCamera = Camera2B.getInstance();
-                        cameraRandomness = random.nextInt(100);
+                        if(!gameManager.getCamera().equals(Camera2B.getInstance())) cameraRandomness2 = random.nextInt(101);
+                        gameManager.setCamera(Camera2B.getInstance());
                     }
 
                     x = .774f;
                     y = -.82f;
                     if(between(x,x + 0.075f,mx) && between(y,y + 0.075f,my)){
-                        currentCamera = Camera4A.getInstance();
-                        cameraRandomness = random.nextInt(100);
+                        if(!gameManager.getCamera().equals(Camera4A.getInstance())) cameraRandomness2 = random.nextInt(101);
+                        gameManager.setCamera(Camera4A.getInstance());
                     }
 
                     y = -.9f;
                     if(between(x,x + 0.075f,mx) && between(y,y + 0.075f,my)){
-                        currentCamera = Camera4B.getInstance();
-                        cameraRandomness = random.nextInt(100);
+                        if(!gameManager.getCamera().equals(Camera4B.getInstance())) cameraRandomness2 = random.nextInt(101);
+                        gameManager.setCamera(Camera4B.getInstance());
                     }
 
                     x = .9f;
                     y = -.725f;
                     if(between(x,x + 0.075f,mx) && between(y,y + 0.075f,my)){
-                        currentCamera = Camera6.getInstance();
-                        cameraRandomness = random.nextInt(100);
+                        if(!gameManager.getCamera().equals(Camera6.getInstance())) cameraRandomness2 = random.nextInt(101);
+                        gameManager.setCamera(Camera6.getInstance());
                     }
 
                     y = -.42f;
                     if(between(x,x + 0.075f,mx) && between(y,y + 0.075f,my)){
-                        currentCamera = Camera7.getInstance();
-                        cameraRandomness = random.nextInt(100);
+                        if(!gameManager.getCamera().equals(Camera7.getInstance())) cameraRandomness2 = random.nextInt(101);
+                        gameManager.setCamera(Camera7.getInstance());
                     }
                 }
 
@@ -360,15 +354,14 @@ public class FNAFMain {
         renderer.setHeight(height);
         renderer.setWidth(width);
 
-        //loadingTexture = Texture.loadTexture("src\\main\\resources\\textures\\jump.jpg");
-        //System.out.println(Thread.currentThread().getContextClassLoader().getResource("textures/jump.jpg"));
+        System.out.println("Loading loading screen texture...");
         loadingTexture = Texture.loadTextureFromResource("textures/jump.jpg");
+        System.out.println();
     }
 
     private void loop() {
         GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         Random random = new Random();
-        int id = 0;
         long lastRandomChange = System.currentTimeMillis();
 
         /**
@@ -403,19 +396,7 @@ public class FNAFMain {
          */
 
         boolean hasExitedCameraButton = true;
-        int lastMovement = 0;
         int fan_stage = 0;
-        int camera_flip = 0;
-        long nightStart = 0;
-        long nightEnd = 0;
-
-        /**
-         * Camera Data
-         */
-
-        /**
-         * Loading Files
-         */
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -437,54 +418,48 @@ public class FNAFMain {
             JSONObject audios = data.getJSONObject("audio");
 
             for(String s : texture.keySet()){
-                System.out.println(s);
+                System.out.println("Loading buffered texture: " + s);
                 textures.put(s,Texture.loadTextureFromResource(texture.getString(s)));
+                System.out.println();
             }
 
-            System.out.println(textures.get("freddy.twitch.1.png"));
+            System.out.println("Loading sounds.");
+
+            System.out.println();
 
             for(String s : audios.keySet()){
                 Sound so = new Sound(audios.getString(s),false);
                 sounds.put(s,so);
+                System.out.println();
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        /*for(String s : listFiles(Thread.currentThread().getContextClassLoader().getResource("textures"))){
-        //for(String s : listFiles("src\\main\\resources\\textures")){
-            File f = new File(s);*/
-            /*try {
-                System.out.println(f.getAbsolutePath());
-                BufferedImage image = ImageIO.read(f);
-                for (int x = 0; x < image.getWidth(); x++) {
-                    for (int y = 0; y < image.getHeight(); y++) {
-                        if(image.getRGB(x,y) == Color.BLACK.getRGB()) image.setRGB(x,y,Color.TRANSLUCENT);
-                    }
-                }
-                ImageIO.write(image,f.getName().toUpperCase().substring(f.getName().length()-3),f);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }*/
-            /*System.out.println("Loading " + s);
-            textures.put(s,Texture.loadTextureFromResource("textures/" + s));
-        }
-
-        soundManager = new SoundManager();
-
-        System.out.println();
-
-        for(String s : listFiles(Thread.currentThread().getContextClassLoader().getResource("audio"))){
-            Sound so = new Sound("audio/" + s,false);
-            sounds.put(s,so);
-        }*/
-
         sounds.get("Static2.ogg").play();
         sounds.get("Mainmenu1.ogg").play();
         sounds.get("Mainmenu1.ogg").setRepeating(true);
 
+        Thread cameraRandomizer = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    cameraRandomness = random.nextInt(100);
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        });
+        cameraRandomizer.start();
+
         while (!GLFW.glfwWindowShouldClose(window)) {
             double start = glfwGetTime();
+
+            glitchStrength-=0.005f*deltaTime;
+            if(glitchStrength < defaultGlitchStrength) glitchStrength = defaultGlitchStrength;
 
             /**
              * Random Event Generator
@@ -547,16 +522,6 @@ public class FNAFMain {
              * Updating
              */
 
-            int timeInSeconds = (int) (System.currentTimeMillis() - nightStart) / 1000;
-
-            if(!blackout) if(nightRunning && timeInSeconds % 5 == 0 && lastMovement != timeInSeconds){
-                lastMovement = timeInSeconds;
-                Bonnie.getInstance().movementOpportunity();
-                Freddy.getInstance().movementOpportunity();
-                Chica.getInstance().movementOpportunity();
-                Foxy.getInstance().movementOpportunity();
-            }
-
             if (GLFW.glfwGetInputMode(window, GLFW.GLFW_CURSOR) == GLFW.GLFW_CURSOR_NORMAL) {
                 GLFW.glfwGetCursorPos(window, mouseX, mouseY);
                 switch (menu) {
@@ -564,30 +529,40 @@ public class FNAFMain {
                         int selection = menuSelection;
                         int offset = 25;
 
-                        if(mouseX[0] >= 140 && mouseX[0] <= 440) if(mouseY[0] >= 350 - offset && mouseY[0] <= 400 - offset){
-                            selection = 0;
-                            if(isMouseClicked) {
-                                menu = Menu.PRE_GAME;
-                                startTime = System.currentTimeMillis();
-                                nightNumber += 1;
+                        if(mouseX[0] >= 140 && mouseX[0] <= 440) {
+                            if (mouseY[0] >= 410 - offset && mouseY[0] <= 460 - offset) {
+                                selection = 1;
+                                if (isMouseClicked) {
+                                    menu = Menu.PRE_GAME;
+                                    startTime = System.currentTimeMillis();
+                                    System.out.println("Continue");
+                                }
+                            } else if (mouseY[0] >= 350 - offset && mouseY[0] <= 400 - offset) {
+                                selection = 0;
+                                if (isMouseClicked) {
+                                    System.out.println("test");
+                                    menu = Menu.PRE_GAME;
+                                    startTime = System.currentTimeMillis();
+                                    System.out.println("test");
+                                    nightNumber = 1;
+                                    System.out.println("New Game");
+                                }
+                            } else if (mouseY[0] >= 470 - offset && mouseY[0] <= 520 - offset) {
+                                selection = 2;
+                                if (isMouseClicked) {
+                                    menu = Menu.PRE_GAME;
+                                    startTime = System.currentTimeMillis();
+                                    nightNumber = 6;
+                                }
+                            } else if (mouseY[0] >= 530 - offset && mouseY[0] <= 580 - offset) {
+                                selection = 3;
+                                if (isMouseClicked) menu = Menu.CUSTOM_NIGHT;
+                                if (isMouseClicked) {
+                                    menu = Menu.PRE_GAME;
+                                    startTime = System.currentTimeMillis();
+                                    nightNumber = 7;
+                                }
                             }
-                        } else if(mouseY[0] >= 410 - offset && mouseY[0] <= 460 - offset){
-                            selection = 1;
-                            if(isMouseClicked) {
-                                menu = Menu.PRE_GAME;
-                                startTime = System.currentTimeMillis();
-                                nightNumber = 1;
-                            }
-                        } else if(mouseY[0] >= 470 - offset && mouseY[0] <= 520 - offset){
-                            selection = 2;
-                            if(isMouseClicked) {
-                                menu = Menu.PRE_GAME;
-                                startTime = System.currentTimeMillis();
-                                nightNumber = 6;
-                            }
-                        } else if(mouseY[0] >= 530 - offset && mouseY[0] <= 580 - offset){
-                            selection = 3;
-                            if(isMouseClicked) menu = Menu.CUSTOM_NIGHT;
                         }
 
                         if(isMouseClicked) {
@@ -615,7 +590,7 @@ public class FNAFMain {
                         if(scroll > 1) scroll = 1;
                         if(scroll < -1) scroll = -1;
 
-                        if(between(0.25f,0.75f,mouseX[0] / width) && between(0.85f,100f,mouseY[0] / height)){
+                        if(between(0.25f,0.75f,mouseX[0] / width) && between(0.85f,100f,mouseY[0] / height) && !gameManager.isPowerout()){
                             if(hasExitedCameraButton) {
                                 menu = Menu.CAMERAS;
                                 cameraRandomness = random.nextInt(100);
@@ -645,67 +620,6 @@ public class FNAFMain {
                 }
             }
 
-            double usage = 0;
-            int devices = 1;
-
-            if(Office.getInstance().isLeftDoor()) {devices++; usage+=idleUsage;}
-            if(Office.getInstance().isRightDoor()) {devices++; usage+=idleUsage;}
-            if(Office.getInstance().isLeftLight()) {devices++; usage+=idleUsage;}
-            if(Office.getInstance().isRightLight()) {devices++; usage+=idleUsage;}
-            if(menu == Menu.CAMERAS) {devices++; usage+=idleUsage;}
-
-            if(power > 0) {
-                power -= ((idleUsage + usage) * deltaTime);
-                if(power == 0) power = -1;
-            }
-            if(power<0) {
-                power = 0;
-                stopAllSounds();
-                blackout = true;
-                hasDoneBlackoutJumpscare = false;
-                sounds.get("powerout.ogg").play();
-                blackoutStart = System.currentTimeMillis();
-
-                songStart = blackoutStart + random.nextInt(1000, 5000);
-                songEnd = songStart + random.nextInt(2000, 15000);
-                stepStart = songEnd + random.nextInt(500, 3000);
-                stepEnd = stepStart + random.nextInt(1000, 15000);
-
-                //songStart = blackoutStart + random.nextInt(1000, 5000);
-                //songEnd = songStart + random.nextInt(2000, 5000);
-                //stepStart = songEnd + random.nextInt(500, 3000);
-                //stepEnd = stepStart + random.nextInt(1000, 5000);
-            }
-
-            boolean isDarkness = false;
-
-            if(blackout) {
-                isDarkness = System.currentTimeMillis() >= songEnd;
-
-                if(between(songStart,songEnd,System.currentTimeMillis())){
-                    //play freddys song
-                }
-
-                if(isDarkness){
-                    //stop freddys song
-                }
-
-                if(between(stepStart,stepEnd,System.currentTimeMillis())){
-                    //play step sound
-                }
-
-                if(System.currentTimeMillis() >= stepEnd){
-                    //stop step sound
-                    //play jumpscare sound
-                    if(!hasDoneBlackoutJumpscare) {
-                        triggerJumpScare("freddy.blackout.", 20, true);
-                        hasDoneBlackoutJumpscare = true;
-                    }
-                }
-            }
-
-
-
             /**
              * Start rendering process
              */
@@ -717,29 +631,12 @@ public class FNAFMain {
             glOrtho(0, width, height, 0, -1, 1);
             glMatrixMode(GL_MODELVIEW);
 
-            if(menu.equals(Menu.CAMERAS) && blackout) menu = Menu.OFFICE;
+            if(menu.equals(Menu.CAMERAS) && gameManager.isPowerout()) menu = Menu.OFFICE;
 
             Office office = Office.getInstance();
 
-            if(blackout){
-                office.setLeftLight(false);
-                office.setRightLight(false);
-                if(office.getLeftDoorState() == DoorState.CLOSED) {
-                    office.setLeftDoorState(DoorState.OPENING);
-                    office.setLeftDoorAnimation(12);
-                    office.setLeftDoor(false);
-                    sounds.get("door.ogg").play();
-                }
-                if(office.getRightDoorState() == DoorState.CLOSED) {
-                    office.setRightDoorState(DoorState.OPENING);
-                    office.setRightDoorAnimation(12);
-                    office.setRightDoor(false);
-                    sounds.get("door.ogg").play();
-                }
-            }
-
-            if (jumpscare == null && !isDarkness) switch (menu) {
-                case Menu.MAIN_MENU -> {
+            if (jumpscare == null) switch (menu) {
+                case MAIN_MENU : {
                     if(noiseSwell) {
                         if(System.currentTimeMillis() - noiseSwellStart >= 5000){
                             noiseSwell = false;
@@ -774,7 +671,8 @@ public class FNAFMain {
 
                     renderer.renderText("New Game", 140, 350,50, Color.WHITE);
                     renderer.renderText("Continue", 140, 420,50, Color.WHITE);
-                    renderer.renderText("6th Night", 140, 490,50, Color.GRAY);
+                    renderer.renderText("Night " + nightNumber, 140, 432,25, Color.WHITE);
+                    renderer.renderText("6th Night", 140, 490,50, Color.WHITE);
                     renderer.renderText("Custom Night", 140, 560,50, Color.GRAY);
 
                     switch (menuSelection) {
@@ -785,8 +683,9 @@ public class FNAFMain {
                     }
 
                     renderer.renderText("v0.0.1 - alpha", 10, height-20,20, Color.WHITE);
+                    break;
                 }
-                case PRE_GAME -> {
+                case PRE_GAME : {
                     long timeSinceStart = System.currentTimeMillis() - startTime;
                     if(timeSinceStart > 0 && timeSinceStart < 3000) renderer.renderTexture(-1,-1,2,2,textures.get("help_wanted.png"),true,false,0);
                     if(timeSinceStart > 3000 && timeSinceStart < 6000) {
@@ -797,16 +696,20 @@ public class FNAFMain {
                     }
                     if(timeSinceStart > 6000) {
                         menu = Menu.OFFICE;
-                        nightStart = System.currentTimeMillis();
-                        nightRunning = true;
                         sounds.get("fan.oga").play();
                         sounds.get("fan.oga").setRepeating(true);
                         sounds.get("Ambiance1.ogg").play();
                         sounds.get("Ambiance1.ogg").setRepeating(true);
-                        power = 100;
+                        //gameManager.startNight(nightNumber);
+                        if(nightNumber <= 6) gameManager.startNight(nightNumber);
+                        else gameManager.startNight(0,20,20,20,20);
+                        if(nightNumber > 5) nightNumber = 5;
                     }
+                    break;
                 }
-                case OFFICE -> {
+                case OFFICE : {
+                    if(gameManager.isBlackout()) break;
+
                     office = Office.getInstance();
 
                     String officeTexture = "office.png";
@@ -826,9 +729,9 @@ public class FNAFMain {
                         }
                     }
 
-                    if(blackout){
+                    if(gameManager.isPowerout()){
                         officeTexture = "office.blackout.png";
-                        if(between(songStart,songEnd,System.currentTimeMillis())){
+                        if(sounds.get("powerout.ogg").isPlaying()){
                             if(Math.random() > 0.2) officeTexture = "office.blackout.freddy.png";
                         }
                     }
@@ -852,7 +755,7 @@ public class FNAFMain {
                     float w = w0*1.25f;
                     float h = w0*textures.get("fan.1.png").getAspectRatio();
                     h = w0*3.2f;
-                    if(!blackout) switch (fan_stage) {
+                    if(!gameManager.isPowerout()) switch (fan_stage) {
                         case 0: {
                             renderer.renderTexture((scroll * 0.25f) - 0.03f,-0.385f,w,h,textures.get("fan.1.png"),true,false,0);
                             break;
@@ -895,32 +798,19 @@ public class FNAFMain {
                     renderer.renderTexture((scroll * 0.25f)+1.1f,-0.385f,w*0.6f,h,textures.get(textureRight),true,false,0);
                     renderer.renderTexture((scroll * 0.25f)-1.25f,-0.385f,w*0.6f,h,textures.get(textureLeft),true,false,0);
 
-                    int ti = timeInSeconds / 60;
-
-                    if(ti == 6) {
-                        stopAllSounds();
-                        nightRunning = false;
-                        menu = Menu.NIGHT_END;
-                        sounds.get("chimes 2.ogg").play();
-                        sounds.get("cheer.ogg").play();
-                        nightEnd = System.currentTimeMillis();
-                    }
-                    renderer.renderText(ti == 0 ? ("12 PM") : (ti + " AM") ,width - 150,40,60,Color.WHITE);
-                    renderer.renderText(String.format("Power %.1f%%",power) ,10,height-25,40,Color.WHITE);
-                    if(!blackout) renderer.renderTexture(-.99f,-0.8f,0.3f,0.1f,textures.get("power." + devices + ".png"),true,false,0);
+                    renderer.renderText(gameManager.getHour() == 0 ? ("12 AM") : (gameManager.getHour() + " AM") ,width - 150,80,60,Color.WHITE);
+                    renderer.renderText(String.format("Power %.1f%%",gameManager.getPower()) ,10,height-25,40,Color.WHITE);
+                    if(!gameManager.isPowerout()) renderer.renderTexture(-.99f,-0.8f,0.3f,0.1f,textures.get("power." + gameManager.getDevices() + ".png"),true,false,0);
+                    break;
                 }
-                case CAMERAS -> {
+                case CAMERAS : {
                     float cameraScroll = (float) (Math.sin(glfwGetTime() / 5));
 
-                    Foxy.getInstance().setStalledUntil(System.currentTimeMillis() + random.nextInt(400,21000));
-
-                    if(currentCamera.equals(Freddy.getInstance().getCurrentCamera())){
-                        Freddy.getInstance().setStalledUntil(System.currentTimeMillis() + random.nextInt(400,2000));
+                    if(!gameManager.getCamera().equals(Camera6.getInstance())) renderer.renderTexture(-1.25f + (cameraScroll * 0.25f),-1,2.5f,2,textures.get(gameManager.getCamera().getImage(cameraRandomness,cameraRandomness2)),true,true,glitchStrength);
+                    else {
+                        renderer.renderTexture(-1f, -1f, 2f, 2f, textures.get(gameManager.getCamera().getImage(cameraRandomness, cameraRandomness2)), true, true, 1f);
+                        renderer.renderTexture(-.5f, -.25f, 1f, .5f, textures.get(gameManager.getCamera().getImage(cameraRandomness, cameraRandomness2)), true, false, glitchStrength);
                     }
-
-                    System.out.println(currentCamera.getImage(cameraRandomness));
-
-                    renderer.renderTexture(-1.25f + (cameraScroll * 0.25f),-1,2.5f,2,textures.get(currentCamera.getImage(cameraRandomness)),true,true,.2f);
 
                     renderer.renderTexture(0.5f,-1f,0.5f,0.9f,textures.get("layout.png"),true,false,0);
                     renderer.renderTexture(-0.5f,-.9f,1,.15f,textures.get("camera.button.png"),true,false,0);
@@ -988,27 +878,22 @@ public class FNAFMain {
                     renderer.renderTexture(x,y,0.075f,0.075f,textures.get("cam.blank.png"),true,false,0);
                     renderer.renderTexture(x + 0.0125f,y + 0.0125f,0.05f,0.05f,textures.get("cam.7.png"),true,false,0);
 
-                    int ti = timeInSeconds / 60;
-                    renderer.renderText(ti == 0 ? ("12 PM") : (ti + " AM") ,width - 150,40,60,Color.WHITE);
-                    renderer.renderText(String.format("Power %.1f%%",power) ,10,height-25,40,Color.WHITE);
-                    if(!blackout) renderer.renderTexture(-.99f,-0.8f,0.3f,0.1f,textures.get("power." + devices + ".png"),true,false,0);
+                    int ti = gameManager.getHour();
+                    renderer.renderText(ti == 0 ? ("12 AM") : (ti + " AM") ,width - 150,80,60,Color.WHITE);
+                    renderer.renderText(String.format("Power %.1f%%",gameManager.getPower()) ,10,height-25,40,Color.WHITE);
+                    if(!gameManager.isPowerout()) renderer.renderTexture(-.99f,-0.8f,0.3f,0.1f,textures.get("power." + gameManager.getDevices() + ".png"),true,false,0);
+                    break;
                 }
-                case NIGHT_END -> {
+                case NIGHT_END : {
                     renderer.renderText("6 AM" ,(width - renderer.textWidth("6 AM", 80)) / 2, (float) ((height-60) / 2.0),80,Color.WHITE);
-                    if(System.currentTimeMillis() - nightEnd > 8000) {
-                        stopAllSounds();
-                        menu = Menu.MAIN_MENU;
-                        sounds.get("Static2.ogg").play();
-                        sounds.get("Mainmenu1.ogg").play();
-                        sounds.get("Mainmenu1.ogg").setRepeating(true);
-                    }
+                    break;
                 }
-                case CUSTOM_NIGHT -> {}
+                case CUSTOM_NIGHT : {}
             }
 
             if(jumpscare != null) {
                 if(jumpscare.equals("foxy.run.")){
-                    if(currentCamera.equals(Camera2A.getInstance())){
+                    if(gameManager.getCamera().equals(Camera2A.getInstance())){
                         renderer.renderTexture(-1.25f + (scroll * 0.25f),-1,2.5f,2,textures.get(jumpscare + jumpscareFrame + ".png"),true,false,0);
                     }
                 } else renderer.renderTexture(-1.25f + (scroll * 0.25f),-1,2.5f,2,textures.get(jumpscare + jumpscareFrame + ".png"),true,false,0);
@@ -1027,6 +912,12 @@ public class FNAFMain {
                     if(s.isPlaying()) renderer.renderText("Sound '" + s.getFilepath() + "' " + s.getCurrentTime() + " / " + s.getTotalLength(), 10, y,20, Color.WHITE);
                     if(s.isPlaying()) y+=20;
                 }
+
+                renderer.renderText(String.format("%s %s     %02d","Bonnie", Bonnie.getInstance().getCurrentCamera().getCameraName(), Bonnie.getInstance().getAI_LEVEL()), 400, 40,40, Color.RED);
+                renderer.renderText(String.format("%s %s     %02d","Chica  ", Chica.getInstance().getCurrentCamera().getCameraName(), Chica.getInstance().getAI_LEVEL()), 400, 80,40, Color.RED);
+                renderer.renderText(String.format("%s %s     %02d    %.2fs","Freddy", Freddy.getInstance().getCurrentCamera().getCameraName(), Freddy.getInstance().getAI_LEVEL(), Freddy.getInstance().stillStalledFor() / 1000f), 400, 120,40, Color.RED);
+                renderer.renderText(String.format("%s               %02d     %02d    %.2fs","Foxy  ", Foxy.getInstance().getStage(), Foxy.getInstance().getAI_LEVEL(), Foxy.getInstance().stillStalledFor() / 1000f), 400, 160,40, Color.RED);
+
             }
 
             deltaTime = (float) (lastFrameTime / (1.0/60.0));
@@ -1046,21 +937,39 @@ public class FNAFMain {
             }
             lastFrameTime = glfwGetTime() - start;
         }
+
+        glfwDestroyWindow(window);
+        System.exit(0);
     }
 
     public static void main(String[] args) throws IOException {
+        boolean enableLogging = false;
 
-        System.out.println(Texture.class.getClassLoader().getResourceAsStream("fonts/TNR.ttf").readAllBytes().length);
+        File f = new File("crash-report.txt");
+        if(!f.exists()) f.createNewFile();
+
+        PrintStream debugStream = new PrintStream(new FileOutputStream(f));
+
+        if(enableLogging){
+            System.setOut(debugStream);
+            System.setErr(debugStream);
+        }
 
         try {
             new FNAFMain().run();
-        } catch (IOException e) {
-            main(args);
-        }
-    }
+        } catch (Exception e) {
+            debugStream.println(e.toString());
 
-    public void setMenu(Menu menu) {
-        this.menu = menu;
+            StackTraceElement[] trace = e.getStackTrace();
+            for(StackTraceElement traceElement : trace){
+                debugStream.println(traceElement.toString());
+            }
+
+            debugStream.flush();
+            debugStream.close();
+
+            JOptionPane.showMessageDialog(null,"FNaF seems to have crashed. Further crash information is in the crash-report.txt",e.toString(),JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public void triggerJumpScare(final String jumpscare, int frames, boolean endGame){
@@ -1070,69 +979,28 @@ public class FNAFMain {
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                for (int i = 0; i < frames; i++) {
-                    if(jumpscare.contains("foxy") || jumpscare.contains("bonnie")) scroll = -1;
-                    else scroll = 1;
+                for (int i = 0; i <= frames; i++) {
+                    if(jumpscare.contains("foxy") || jumpscare.contains("bonnie")) scroll = 1;
+                    else scroll = 0;
                     jumpscareFrame = i;
 
-                    System.out.println(jumpscare);
-                    System.out.println(jumpscareFrame);
                     try {
-                        Thread.sleep(16);
+                        Thread.sleep(32);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
                 }
                 if(endGame) {
-                    nightRunning = false;
                     stopAllSounds();
                     menu = Menu.MAIN_MENU;
                     sounds.get("Static2.ogg").play();
                     sounds.get("Mainmenu1.ogg").play();
                     sounds.get("Mainmenu1.ogg").setRepeating(true);
-                    Freddy.getInstance().setCurrentCamera(Camera1A.getInstance());
-                    Chica.getInstance().setCurrentCamera(Camera1A.getInstance());
-                    Bonnie.getInstance().setCurrentCamera(Camera1A.getInstance());
-                    Foxy.getInstance().setStage(0);
-                    Office.getInstance().setRightDoor(false);
-                    Office.getInstance().setLeftDoor(false);
-                    Office.getInstance().setLeftLight(false);
-                    Office.getInstance().setRightLight(false);
-                    Office.getInstance().setLeftDoorState(DoorState.OPEN);
-                    Office.getInstance().setRightDoorState(DoorState.OPEN);
                 }
                 m.jumpscare = null;
             }
         });
         t.start();
-    }
-
-    public Set<String> listFiles(String dir) {
-        return Stream.of(new File(dir).listFiles())
-                .filter(file -> !file.isDirectory())
-                .map(File::getAbsolutePath)
-                .collect(Collectors.toSet());
-    }
-
-    public List<String> listFiles(URL url) {
-        List<String> data = new ArrayList<>();
-
-
-        if (url != null) {
-            File folder = new File(url.getFile());
-            try (Stream<Path> files = Files.list(Paths.get(folder.getAbsolutePath()))) {
-                files.forEach(file -> {
-                    //System.out.println(file.getFileName());
-                    data.add(String.valueOf(file.getFileName()));
-                    System.out.println(String.valueOf(file.getFileName()));
-                });
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            System.out.println("Folder not found");
-        }
-        return data;
     }
 
     private void updateProjectionMatrix() {
@@ -1148,13 +1016,24 @@ public class FNAFMain {
         return Math.min(val1,val2) <= toCheck && Math.max(val1,val2) >= toCheck;
     }
 
-    private void stopAllSounds(){
+    public static void stopAllSounds(){
         for(Sound s : sounds.values()) s.stop();
     }
 
-    public String formatTime(int seconds) {
-        int hours = seconds / 3600;
-        int minutes = (seconds % 3600) / 60;
-        return String.format("%02d:%02d", hours, minutes);
+    private void toggleFullscreen() {
+        fullscreen = !fullscreen;
+
+        GLFWVidMode vidMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+
+        if (fullscreen) {
+            /*windowedXPos = GLFW.glfwGetWindowPosX(window);
+            windowedYPos = GLFW.glfwGetWindowPosY(window);
+            windowedWidth = GLFW.glfwGetWindowWidth(window);
+            windowedHeight = GLFW.glfwGetWindowHeight(window);*/
+
+            GLFW.glfwSetWindowMonitor(window, GLFW.glfwGetPrimaryMonitor(), 0, 0, vidMode.width(), vidMode.height(), vidMode.refreshRate());
+        } else {
+            GLFW.glfwSetWindowMonitor(window, 0, 50, 50, 1280, 720, 0);
+        }
     }
 }

@@ -19,11 +19,11 @@ public class Camera5 extends Camera{
     }
 
     @Override
-    public String getImage(int cameraRandomness) {
+    public String getImage(int cameraRandomness, int cameraRandomness2) {
         String name = "backstage.";
         if (Bonnie.getInstance().getCurrentCamera().equals(this)) name += "bonnie.";
         else name+="empty.";
-        if(cameraRandomness<=20) name+="anomaly.";
+        if(cameraRandomness2<=20) name+="anomaly.";
         name += "png";
         return name;
     }

@@ -35,15 +35,13 @@ public class Renderer {
     private int height;
 
     private Map<Float, Renderer.FontData> fontDataMap = new HashMap<>();
-    private String fontPath = "fonts\\TNR.ttf";
+    private String fontPath = "fonts/font.ttf";
 
     public int vao;
     public ShaderProgram textureShader;
 
     public Renderer(){
         vao = createVertexArray();
-
-        System.out.println(Arrays.toString(new File(System.getProperty("user.home") + "/.fonts").listFiles()));
 
         Shader vertexShader = Shader.loadShader(GL20.GL_VERTEX_SHADER,"shader/vertex.vert");
         Shader fragmentShader = Shader.loadShader(GL20.GL_FRAGMENT_SHADER,"shader/fragment.frag");
@@ -63,6 +61,7 @@ public class Renderer {
     }
 
     public void renderTexture(float x, float y, float w, float h, float sectionX, float sectionY, float sectionW, float sectionH, Texture texture, boolean overrideAspectRatio, Color color, boolean hasNoise, float noiseStrength){
+        if(texture == null) System.err.println("Texture is null.");
         renderTexture(x,y,w,h,sectionX,sectionY,sectionW,sectionH,texture.getId(),color,hasNoise,noiseStrength);
     }
 

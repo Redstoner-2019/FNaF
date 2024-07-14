@@ -9,17 +9,22 @@ import java.util.Random;
 
 public class Freddy extends Animatronic{
     private static Freddy INSTANCE;
-    private boolean waitingForAttack = false;
+
     private int failedAttacks = 0;
-    private int maxFailedAttacks = 5;
     private long stalledUntil = 0;
 
-    public void setStalledUntil(long stalledUntil) {
-        this.stalledUntil = stalledUntil;
+    public long stillStalledFor(){
+        long time = getStalledUntil() - System.currentTimeMillis();
+        if(time < 0) time = 0;
+        return time;
     }
 
     public long getStalledUntil() {
         return stalledUntil;
+    }
+
+    public void setStalledUntil(long stalledUntil) {
+        this.stalledUntil = stalledUntil;
     }
 
     private Freddy(){
@@ -28,68 +33,72 @@ public class Freddy extends Animatronic{
     }
 
     @Override
-    public void movementOpportunity() {
-        if(System.currentTimeMillis() < stalledUntil) return;
+    public void move() {
         if(Chica.getInstance().getCurrentCamera().getCameraName().equals("Camera1A") || Bonnie.getInstance().getCurrentCamera().getCameraName().equals("Camera1A")){
             return;
         }
-        Random random = new Random();
-        int roll = random.nextInt(19) + 1;
-        System.out.println("Freddy rolled " + roll + " ai " + getAI_LEVEL());
-        if(waitingForAttack) return;
-        if(roll <= getAI_LEVEL()){
-            switch (getCurrentCamera().getCameraName()) {
-                case "Camera1A" : {
-                    setCurrentCamera(Camera1B.getInstance());
-                    break;
-                }
-                case "Camera1B" : {
-                    setCurrentCamera(Camera7.getInstance());
-                    break;
-                }
-                case "Camera7" : {
-                    setCurrentCamera(Camera6.getInstance());
-                    break;
-                }
-                case "Camera6" : {
-                    setCurrentCamera(Camera4A.getInstance());
-                    break;
-                }
-                case "Camera4A" : {
-                    setCurrentCamera(Camera4B.getInstance());
-                    failedAttacks = 0;
-                    maxFailedAttacks = random.nextInt(2,5);
-                    break;
-                }
-                case "Camera4B" : {
-                    if(!Office.getInstance().isRightDoor() && FNAFMain.fnafMain.menu == Menu.CAMERAS){
-                        waitingForAttack = true;
-                        Thread t = new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                while (FNAFMain.fnafMain.menu == Menu.CAMERAS){
-                                    System.out.println("Waiting...");
-                                    try {
-                                        Thread.sleep(100);
-                                    } catch (InterruptedException e) {
-                                        throw new RuntimeException(e);
-                                    }
+        switch (getCurrentCamera().getCameraName()) {
+            case "Camera1A" : {
+                moveTo(Camera1B.getInstance());
+                break;
+            }
+            case "Camera1B" : {
+                moveTo(Camera7.getInstance());
+                break;
+            }
+            case "Camera7" : {
+                moveTo(Camera6.getInstance());
+                break;
+            }
+            case "Camera6" : {
+                moveTo(Camera4A.getInstance());
+                break;
+            }
+            case "Camera4A" : {
+                moveTo(Camera4B.getInstance());
+                failedAttacks = 0;
+                break;
+            }
+            case "Camera4B" : {
+                if(!Office.getInstance().isRightDoor() && FNAFMain.fnafMain.menu == Menu.CAMERAS){
+                    //waitingForAttack = true;
+                    Thread t = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            while (FNAFMain.fnafMain.menu == Menu.CAMERAS){
+                                System.out.println("Waiting...");
+                                try {
+                                    Thread.sleep(100);
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
                                 }
-                                FNAFMain.fnafMain.triggerJumpScare("freddy.jump.",27,true);
-                                waitingForAttack = false;
                             }
-                        });
-                        t.start();
-                    } else {
-                        failedAttacks++;
-                        if(failedAttacks >= maxFailedAttacks){
-                            setCurrentCamera(Camera4A.getInstance());
+                            FNAFMain.fnafMain.triggerJumpScare("freddy.jump.",27,true);
+                            //waitingForAttack = false;
                         }
+                    });
+                    t.start();
+                } else {
+                    failedAttacks++;
+                    if(failedAttacks >= 2){
+                        moveTo(Camera4A.getInstance());
                     }
-                    break;
                 }
+                break;
             }
         }
+    }
+
+    public void moveTo(Camera c){
+        if(getCurrentCamera().equals(FNAFMain.fnafMain.gameManager.getCamera())) FNAFMain.fnafMain.glitchStrength = 1;
+        System.out.print("Freddy: Moving from " + getCurrentCamera().getCameraName());
+        setCurrentCamera(c);
+        System.out.println(" to " + getCurrentCamera().getCameraName());
+        if(getCurrentCamera().equals(FNAFMain.fnafMain.gameManager.getCamera())) FNAFMain.fnafMain.glitchStrength = 1;
+        int laugh = new Random().nextInt(1,4);
+        System.out.println(laugh);
+        FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").stop();
+        FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").play();
     }
 
     public static Freddy getInstance() {

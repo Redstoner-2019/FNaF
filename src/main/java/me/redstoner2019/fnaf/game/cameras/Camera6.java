@@ -19,7 +19,7 @@ public class Camera6 extends Camera {
     }
 
     @Override
-    public String getImage(int cameraRandomness) {
+    public String getImage(int cameraRandomness, int cameraRandomness2) {
         String name = "audio-only.png";
         return name;
     }

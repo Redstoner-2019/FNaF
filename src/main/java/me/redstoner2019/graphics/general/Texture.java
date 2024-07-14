@@ -159,31 +159,23 @@ public class Texture {
     }
 
     public static Texture loadTextureFromResource(String resourcePath) {
-        try (InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath)) {
+        return loadTextureNew(createBuffer(resourcePath));
+    }
+
+    public static ByteBuffer createBuffer(String resourcePath){
+        System.out.println("Creating Buffer for " + resourcePath);
+        try {
+            InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath);
             byte[] bytes = IOUtils.toByteArray(is);
             ByteBuffer imageBuffer = ByteBuffer.allocateDirect(bytes.length);
             imageBuffer.put(bytes);
             imageBuffer.flip();
-            return loadTextureNew(imageBuffer);
-        } catch (IOException e) {
-            System.err.println("Failed to load texture from resource: " + resourcePath);
-            return null;
-        }
-    }
-
-    public static ByteBuffer createBuffer(String resourcePath){
-        System.out.println(resourcePath);
-        try (InputStream is = Texture.class.getClassLoader().getResourceAsStream(resourcePath)) {
-            System.out.println(is);
-            byte[] bytes = is.readAllBytes();
-            ByteBuffer imageBuffer = ByteBuffer.allocateDirect(bytes.length);
-            imageBuffer.put(bytes);
-            imageBuffer.flip();
             return imageBuffer;
-        } catch (IOException e) {
-            System.out.println("Failed to load texture from resource: " + resourcePath);
-            return null;
+        }catch (Exception e){
+            e.printStackTrace();
+            System.out.println("Failed to load Buffer from resource: " + resourcePath);
         }
+        return null;
     }
 
     public static Texture loadTextureNew(ByteBuffer imageBuffer) {

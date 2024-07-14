@@ -17,17 +17,17 @@ public class Camera4A extends Camera {
     }
 
     @Override
-    public String getImage(int cameraRandomness) {
+    public String getImage(int cameraRandomness, int cameraRandomness2) {
         String name = "e.hall.";
         if(Freddy.getInstance().getCurrentCamera().equals(this)) name = "e.hall.freddy.";
         if(Chica.getInstance().getCurrentCamera().equals(this)) {
             name = "e.hall.chica.";
-            if(cameraRandomness <= 20) name+="anomaly.";
+            if(cameraRandomness2 <= 20) name+="anomaly.";
         }
         if(name.equals("e.hall.")) {
             name += "empty.";
-            if(cameraRandomness <= 10) name+="anomaly.1.";
-            else if(cameraRandomness <= 20) name+="anomaly.2.";
+            if(cameraRandomness2 <= 10) name+="anomaly.1.";
+            else if(cameraRandomness2 <= 20) name+="anomaly.2.";
         }
         name+="png";
         return name;
