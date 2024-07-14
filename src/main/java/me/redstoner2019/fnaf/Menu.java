@@ -6,5 +6,7 @@ public enum Menu {
     OFFICE,
     CAMERAS,
     NIGHT_END,
-    CUSTOM_NIGHT
+    CUSTOM_NIGHT,
+    NIGHT_END_DEATH,
+    NOISE
 }

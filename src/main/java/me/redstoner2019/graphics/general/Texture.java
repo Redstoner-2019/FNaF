@@ -1,20 +1,22 @@
 package me.redstoner2019.graphics.general;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 
 import org.apache.commons.io.IOUtils;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_CLAMP_TO_BORDER;
-import static org.lwjgl.stb.STBImage.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
 
 public class Texture {
@@ -160,6 +162,52 @@ public class Texture {
 
     public static Texture loadTextureFromResource(String resourcePath) {
         return loadTextureNew(createBuffer(resourcePath));
+    }
+
+    /*public static ByteBuffer loadImage(String resource, IntBuffer width, IntBuffer height, IntBuffer channels) {
+        ByteBuffer imageBuffer;
+        // Load image from resources folder
+        try (InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource);
+             ReadableByteChannel rbc = Channels.newChannel(inputStream)) {
+            System.out.println(inputStream);
+            System.out.println(inputStream.readAllBytes().length);
+
+            imageBuffer = MemoryUtil.memAlloc(1024 * 1024); // Allocate 1MB for the image
+            while (true) {
+                int bytes = rbc.read(imageBuffer);
+                if (bytes == -1) {
+                    break;
+                }
+            }
+            imageBuffer.flip();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load resource: " + resource, e);
+        }
+
+        // Decode image
+        ByteBuffer image;
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            width = stack.mallocInt(1);
+            height = stack.mallocInt(1);
+            channels = stack.mallocInt(1);
+
+            image = STBImage.stbi_load_from_memory(imageBuffer, width, height, channels, 4);
+            if (image == null) {
+                throw new RuntimeException("Failed to load image: " + STBImage.stbi_failure_reason());
+            }
+        }
+
+        MemoryUtil.memFree(imageBuffer);
+        return image;
+    }*/
+
+    public static ByteBuffer getTextureData(int textureID, int width, int height) {
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureID);
+
+        ByteBuffer buffer = BufferUtils.createByteBuffer(width * height * 4);
+        GL11.glGetTexImage(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
+
+        return buffer;
     }
 
     public static ByteBuffer createBuffer(String resourcePath){

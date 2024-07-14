@@ -11,6 +11,10 @@ import me.redstoner2019.fnaf.game.animatronics.Foxy;
 import me.redstoner2019.fnaf.game.animatronics.Freddy;
 import me.redstoner2019.fnaf.game.cameras.*;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Random;
 
 import static me.redstoner2019.fnaf.FNAFMain.*;
@@ -32,6 +36,7 @@ public class GameManager {
     private boolean isBlackout = false;
     private boolean isPowerout = false;
     private int devices = 1;
+    private boolean customNight = false;
 
     private final Object CAMERA_DOWN_WAIT = new Object();
     private final Object CAMERA_UP_WAIT = new Object();
@@ -167,6 +172,7 @@ public class GameManager {
                 System.out.println(bonnie.getAI_LEVEL());
                 System.out.println(chica.getAI_LEVEL());
                 System.out.println(foxy.getAI_LEVEL());
+                customNight = true;
             }
         }
 
@@ -182,11 +188,15 @@ public class GameManager {
 
                 if(prevHour != hour){
                     switch (hour){
-                        case 2 -> bonnie.setAI_LEVEL(bonnie.getAI_LEVEL() + 1);
+                        case 2 -> {
+                            if(!customNight) bonnie.setAI_LEVEL(bonnie.getAI_LEVEL() + 1);
+                        }
                         case 3,4 -> {
-                            bonnie.setAI_LEVEL(bonnie.getAI_LEVEL() + 1);
-                            chica.setAI_LEVEL(chica.getAI_LEVEL() + 1);
-                            foxy.setAI_LEVEL(foxy.getAI_LEVEL() + 1);
+                            if(!customNight) {
+                                bonnie.setAI_LEVEL(bonnie.getAI_LEVEL() + 1);
+                                chica.setAI_LEVEL(chica.getAI_LEVEL() + 1);
+                                foxy.setAI_LEVEL(foxy.getAI_LEVEL() + 1);
+                            }
                         }
                         case 6 -> {
                             stopAllSounds();
@@ -198,16 +208,22 @@ public class GameManager {
                             if(fnafMain.nightNumber < 5) fnafMain.nightNumber++;
 
                             try {
-                                Thread.sleep(8000);
+                                FileOutputStream outputStream = new FileOutputStream(new File("save.txt"));
+                                outputStream.write(fnafMain.nightNumber);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+
+                            try {
+                                Thread.sleep(10000);
                             } catch (InterruptedException e) {
                                 throw new RuntimeException(e);
                             }
 
                             stopAllSounds();
-                            fnafMain.menu = Menu.MAIN_MENU;
-                            sounds.get("Static2.ogg").play();
-                            sounds.get("Mainmenu1.ogg").play();
-                            sounds.get("Mainmenu1.ogg").setRepeating(true);
+                            fnafMain.startTime = System.currentTimeMillis() - 3000;
+                            fnafMain.menu = Menu.PRE_GAME;
+                            sounds.get("blip.ogg").play();
                         }
                     }
                 }
@@ -215,7 +231,7 @@ public class GameManager {
                 if(hour == 6) break;
 
                 if(!isPowerout){
-                    if(random.nextInt(50000) == 1){
+                    if(random.nextInt(100000) == 1){
                         sounds.get("Circus.ogg").play();
                     }
 
@@ -414,6 +430,7 @@ public class GameManager {
                             } else {
                                 System.out.println("Bonnie has entered the office");
                                 bonnie.setCurrentCamera(InOfficeCamera.getInstance());
+                                Office.getInstance().setLeftLight(false);
                                 synchronized (CAMERA_DOWN_WAIT) {
                                     CAMERA_DOWN_WAIT.wait();
                                 }
@@ -467,6 +484,7 @@ public class GameManager {
                             } else {
                                 System.out.println("Chica has entered the office");
                                 chica.setCurrentCamera(InOfficeCamera.getInstance());
+                                Office.getInstance().setRightLight(false);
                                 synchronized (CAMERA_DOWN_WAIT) {
                                     CAMERA_DOWN_WAIT.wait();
                                 }
