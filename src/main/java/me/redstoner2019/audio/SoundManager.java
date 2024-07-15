@@ -1,5 +1,6 @@
 package me.redstoner2019.audio;
 
+import me.redstoner2019.fnaf.game.animatronics.Freddy;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.ALC;
 import org.lwjgl.openal.ALCCapabilities;
@@ -11,8 +12,10 @@ public class SoundManager {
 
     private long audioContext;
     private long audioDevice;
+    private static SoundManager INSTANCE;
+    private float volume = .5f;
 
-    public SoundManager(){
+    private SoundManager(){
         String defaultDeviceName = alcGetString(0, ALC_DEFAULT_DEVICE_SPECIFIER);
         audioDevice = alcOpenDevice(defaultDeviceName);
 
@@ -39,5 +42,20 @@ public class SoundManager {
     public void destroy(){
         alcDestroyContext(audioContext);
         alcCloseDevice(audioDevice);
+    }
+
+    public static SoundManager getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new SoundManager();
+        }
+        return INSTANCE;
+    }
+
+    public float getVolume() {
+        return volume;
+    }
+
+    public void setVolume(float volume) {
+        this.volume = volume;
     }
 }

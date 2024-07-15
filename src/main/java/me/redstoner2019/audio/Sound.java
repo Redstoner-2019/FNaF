@@ -1,20 +1,24 @@
 package me.redstoner2019.audio;
 
 import me.redstoner2019.graphics.general.Texture;
+import org.lwjgl.stb.STBVorbisAlloc;
+import org.lwjgl.system.MemoryUtil;
 
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 import static org.lwjgl.openal.AL10.*;
 import static org.lwjgl.openal.AL11.AL_SAMPLE_OFFSET;
-import static org.lwjgl.stb.STBVorbis.stb_vorbis_decode_filename;
-import static org.lwjgl.stb.STBVorbis.stb_vorbis_decode_memory;
+import static org.lwjgl.stb.STBVorbis.*;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.libc.LibCStdlib.free;
 
 public class Sound {
     private int bufferId;
     private int sourceId;
+    private float volume = 1f;
+    private float general_volume = 0.15f;
     private String filepath;
 
     private boolean isPlaying = false;
@@ -28,7 +32,11 @@ public class Sound {
         stackPush();
         IntBuffer sampleRateBuffer = stackMallocInt(1);
 
-        ShortBuffer rawAudioBuffer = stb_vorbis_decode_memory(Texture.createBuffer(filepath),channelsBuffer,sampleRateBuffer);
+        ByteBuffer b = Texture.createBuffer(filepath);
+
+        System.out.println(b);
+
+        ShortBuffer rawAudioBuffer = stb_vorbis_decode_memory(b,channelsBuffer,sampleRateBuffer);
 
         if(rawAudioBuffer == null) {
             System.out.println("Could not load sound '" + filepath + "'");
@@ -60,9 +68,11 @@ public class Sound {
         alSourcei(sourceId, AL_BUFFER, bufferId);
         alSourcei(sourceId, AL_LOOPING, loops ? 1 : 0);
         alSourcei(sourceId, AL_POSITION, 0);
-        alSourcef(sourceId, AL_GAIN, 0.3f);  //Volume
+        alSourcef(sourceId, AL_GAIN, 0.15f);  //Volume
 
         free(rawAudioBuffer);
+
+        updateGain();
     }
 
     public void delete(){
@@ -71,6 +81,7 @@ public class Sound {
     }
 
     public void play(){
+        updateGain();
         int state = alGetSourcei(sourceId, AL_SOURCE_STATE);
         if(state == AL_STOPPED){
             isPlaying = false;
@@ -110,9 +121,20 @@ public class Sound {
     public void setRepeating(boolean repeating){
         alSourcei(sourceId, AL_LOOPING, repeating ? 1 : 0);
     }
-    public void setVolume(float volume){
-        alSourcef(sourceId, AL_GAIN, volume);
+    public void updateGain(){
+        general_volume = SoundManager.getInstance().getVolume();
+        alSourcef(sourceId, AL_GAIN, volume * general_volume);
     }
+
+    public float getVolume() {
+        return volume;
+    }
+
+    public void setVolume(float volume) {
+        this.volume = volume;
+        updateGain();
+    }
+
     public void setCursor(int frame){
         alSourcei(sourceId, AL_POSITION, frame);
     }
@@ -127,9 +149,13 @@ public class Sound {
 
         int bytesPerSample = channels * (bitsPerSample / 8);
 
-        if(bytesPerSample == 0) bytesPerSample = 2;
+        if(bytesPerSample == 0) return 0;
 
         return sizeInBytes / bytesPerSample;
+    }
+
+    public int getLengthMS(){
+        return getLength() / alGetBufferi(bufferId, AL_FREQUENCY);
     }
 
     public String getCurrentTime(){
@@ -140,7 +166,7 @@ public class Sound {
 
     public String getTotalLength(){
         int frequency = alGetBufferi(bufferId, AL_FREQUENCY);
-        if(frequency == 0) frequency = 44100;
+        if(frequency == 0) return "0";
         return getLength() / frequency + "s";
     }
 }

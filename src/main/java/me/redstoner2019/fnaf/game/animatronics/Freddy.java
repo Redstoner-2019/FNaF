@@ -61,7 +61,6 @@ public class Freddy extends Animatronic{
             }
             case "Camera4B" : {
                 if(!Office.getInstance().isRightDoor() && FNAFMain.fnafMain.menu == Menu.CAMERAS){
-                    //waitingForAttack = true;
                     Thread t = new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -74,13 +73,12 @@ public class Freddy extends Animatronic{
                                 }
                             }
                             FNAFMain.fnafMain.triggerJumpScare("freddy.jump.",27,true);
-                            //waitingForAttack = false;
                         }
                     });
                     t.start();
                 } else {
                     failedAttacks++;
-                    if(failedAttacks >= 2){
+                    if(failedAttacks >= 5){
                         moveTo(Camera4A.getInstance());
                     }
                 }

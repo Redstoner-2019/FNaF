@@ -23,9 +23,13 @@ import static org.lwjgl.glfw.GLFW.glfwGetTime;
 public class GameManager {
     private static GameManager INSTANCE;
 
-    public final static long NIGHT_LENGTH = 360 * 1000;
-    private final static double idleUsage =.0025;
+    private long NIGHT_LENGTH = 360 * 1000;
+    private double idleUsage =.0025;
     private Random random = new Random();
+    private int freddyInterval = 3820;
+    private int bonnieInterval = 4970;
+    private int chicaInterval = 4980;
+    private int foxyInterval = 5010;
 
     private long nightStart;
     private int hour = 0;
@@ -36,7 +40,9 @@ public class GameManager {
     private boolean isBlackout = false;
     private boolean isPowerout = false;
     private int devices = 1;
-    private boolean customNight = false;
+    public boolean customNight = false;
+    public boolean ventaNight = false;
+    public int nightNumber = 0;
 
     private final Object CAMERA_DOWN_WAIT = new Object();
     private final Object CAMERA_UP_WAIT = new Object();
@@ -46,6 +52,16 @@ public class GameManager {
 
     private GameManager(){
 
+    }
+
+
+
+    public long getNIGHT_LENGTH() {
+        return NIGHT_LENGTH;
+    }
+
+    public void setNIGHT_LENGTH(long NIGHT_LENGTH) {
+        this.NIGHT_LENGTH = NIGHT_LENGTH;
     }
 
     public long getNightStart() {
@@ -96,6 +112,22 @@ public class GameManager {
         startNight(night,0,0,0,0);
     }
 
+    public boolean isVentaNight() {
+        return ventaNight;
+    }
+
+    public void setVentaNight(boolean ventaNight) {
+        this.ventaNight = ventaNight;
+    }
+
+    public boolean isCustomNight() {
+        return customNight;
+    }
+
+    public void setCustomNight(boolean customNight) {
+        this.customNight = customNight;
+    }
+
     public void startNight(int night, int bonnieAI, int chicaAI, int freddyAI, int foxyAI){
         if(nightRunning) return;
         nightStart = System.currentTimeMillis();
@@ -105,6 +137,7 @@ public class GameManager {
         power = 100;
         isBlackout = false;
         isPowerout = false;
+        nightNumber = night;
 
         Office.getInstance().setRightDoor(false);
         Office.getInstance().setLeftDoor(false);
@@ -112,6 +145,8 @@ public class GameManager {
         Office.getInstance().setRightLight(false);
         Office.getInstance().setLeftDoorState(DoorState.OPEN);
         Office.getInstance().setRightDoorState(DoorState.OPEN);
+        Office.getInstance().setLeftDoorAnimatronic(null);
+        Office.getInstance().setRightDoorAnimatronic(null);
 
         Freddy freddy = Freddy.getInstance();
         Bonnie bonnie = Bonnie.getInstance();
@@ -146,9 +181,9 @@ public class GameManager {
             }
             case 4 -> {
                 freddy.setAI_LEVEL(Math.random() > 0.5 ? 1 : 2);
-                bonnie.setAI_LEVEL(2);
-                chica.setAI_LEVEL(4);
-                foxy.setAI_LEVEL(6);
+                bonnie.setAI_LEVEL(2); //5
+                chica.setAI_LEVEL(4); //6
+                foxy.setAI_LEVEL(6); //8
             }
             case 5 -> {
                 freddy.setAI_LEVEL(3);
@@ -162,16 +197,28 @@ public class GameManager {
                 chica.setAI_LEVEL(12);
                 foxy.setAI_LEVEL(16);
             }
+            case 8 -> {
+                freddy.setAI_LEVEL(20);
+                bonnie.setAI_LEVEL(20);
+                chica.setAI_LEVEL(20);
+                foxy.setAI_LEVEL(20);
+
+                idleUsage/=2.4f;
+
+                customNight = true;
+                ventaNight = true;
+                setNIGHT_LENGTH(648000);
+
+                freddyInterval = 2920;
+                bonnieInterval = 3970;
+                chicaInterval = 3980;
+                foxyInterval = 4010;
+            }
             default -> {
                 freddy.setAI_LEVEL(freddyAI);
                 bonnie.setAI_LEVEL(bonnieAI);
                 chica.setAI_LEVEL(chicaAI);
                 foxy.setAI_LEVEL(foxyAI);
-                System.out.println("Default");
-                System.out.println(freddy.getAI_LEVEL());
-                System.out.println(bonnie.getAI_LEVEL());
-                System.out.println(chica.getAI_LEVEL());
-                System.out.println(foxy.getAI_LEVEL());
                 customNight = true;
             }
         }
@@ -203,6 +250,11 @@ public class GameManager {
                             nightRunning = false;
                             FNAFMain.fnafMain.menu = Menu.NIGHT_END;
                             sounds.get("chimes 2.ogg").play();
+                            try {
+                                Thread.sleep(2000);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
                             sounds.get("cheer.ogg").play();
                             nightRunning = false;
                             if(fnafMain.nightNumber < 5) fnafMain.nightNumber++;
@@ -215,15 +267,22 @@ public class GameManager {
                             }
 
                             try {
-                                Thread.sleep(10000);
+                                Thread.sleep(8000);
                             } catch (InterruptedException e) {
                                 throw new RuntimeException(e);
                             }
 
                             stopAllSounds();
-                            fnafMain.startTime = System.currentTimeMillis() - 3000;
-                            fnafMain.menu = Menu.PRE_GAME;
-                            sounds.get("blip.ogg").play();
+                            if(customNight || ventaNight){
+                                fnafMain.menu = Menu.MAIN_MENU;
+                                sounds.get("Static2.ogg").play();
+                                sounds.get("Mainmenu1.ogg").play();
+                                sounds.get("Mainmenu1.ogg").setRepeating(true);
+                            } else {
+                                fnafMain.startTime = System.currentTimeMillis() - 3000;
+                                fnafMain.menu = Menu.PRE_GAME;
+                                sounds.get("blip.ogg").play();
+                            }
                         }
                     }
                 }
@@ -231,7 +290,8 @@ public class GameManager {
                 if(hour == 6) break;
 
                 if(!isPowerout){
-                    if(random.nextInt(100000) == 1){
+                    if(random.nextInt(200000) == 1){
+                        sounds.get("Circus.ogg").setVolume(0.1f);
                         sounds.get("Circus.ogg").play();
                     }
 
@@ -271,9 +331,13 @@ public class GameManager {
                 isCameraUp = FNAFMain.fnafMain.menu == Menu.CAMERAS;
 
                 if(!isCameraUp && lastCameraUp){
-                    if(camera.equals(freddy.getCurrentCamera())) freddy.setStalledUntil(System.currentTimeMillis() + random.nextInt(2000,10000));
+                    if(camera.equals(freddy.getCurrentCamera())) {
+                        if(!ventaNight) freddy.setStalledUntil(System.currentTimeMillis() + random.nextInt(2000, 10000));
+                        else freddy.setStalledUntil(System.currentTimeMillis() + random.nextInt(800, 3000));
+                    }
                     else freddy.setStalledUntil(System.currentTimeMillis());
-                    foxy.setStalledUntil(System.currentTimeMillis() + random.nextInt(2000,20000));
+                    if(!ventaNight) foxy.setStalledUntil(System.currentTimeMillis() + random.nextInt(2000,20000));
+                    else foxy.setStalledUntil(System.currentTimeMillis() + random.nextInt(1000,6000));
                     Thread t = new Thread(() -> {
                         synchronized (CAMERA_DOWN_WAIT) {
                             System.out.println("Camera Down");
@@ -304,6 +368,51 @@ public class GameManager {
                 if(fnafMain.menu == Menu.CAMERAS) {devices++; usage+=idleUsage;}
 
                 gameManager.devices = devices;
+
+                Thread freddyOfficeEnter = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        System.out.println("freddy enter");
+                        int talking = random.nextInt(4) + 1;
+                        sounds.get("breath_talking." + talking + ".ogg").setVolume(0.05f);
+                        sounds.get("breath_talking." + talking + ".ogg").play();
+                        sounds.get("breath_talking." + talking + ".ogg").setRepeating(true);
+                        try {
+                            synchronized (CAMERA_DOWN_WAIT) {
+                                freddy.moveTo(OfficeCamera.getInstance());
+                                long sleep = random.nextInt(15000,25000);
+                                System.out.println("Freddy entered the office, waiting " + sleep);
+                                Thread.sleep(sleep);
+                                if(foxy.getCurrentCamera().equals(InOfficeCamera.getInstance())) return;
+                                if(nightRunning && isCameraUp) {
+                                    sleep = random.nextInt(10000,20000);
+                                    System.out.println("Waiting for camera down, max " + sleep);
+                                    CAMERA_DOWN_WAIT.wait(sleep);
+                                    if(isCameraUp) {
+                                        if(fnafMain.cameraStage == 11) for (int i = 10; i >= 0; i--) {
+                                            fnafMain.cameraStage = i;
+                                            try {
+                                                Thread.sleep(16);
+                                            } catch (InterruptedException e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                        }
+                                        fnafMain.cameraStage = -1;
+                                        fnafMain.menu = Menu.OFFICE;
+                                    }
+                                }
+                                if (nightRunning && !isPowerout) FNAFMain.fnafMain.triggerJumpScare("freddy.jump.",27,true);
+                                nightRunning = false;
+                            }
+                        } catch (Exception e){
+
+                        }
+                    }
+                });
+                if(freddy.getCurrentCamera().equals(Camera4B.getInstance()) && isCameraUp && !office.isRightDoor()) {
+                    freddyOfficeEnter.start();
+                }
+                if(!nightRunning) freddyOfficeEnter.interrupt();
 
                 if(power > 0 && gameManager.isNightRunning()) {
                     power -= ((idleUsage + usage) * deltaTime);
@@ -391,7 +500,7 @@ public class GameManager {
         Thread freddyThread = new Thread(() -> {
             while (nightRunning) {
                 try {
-                    Thread.sleep(3020);
+                    Thread.sleep(freddyInterval);
                     if(chica.getCurrentCamera().equals(Camera1A.getInstance()) || bonnie.getCurrentCamera().equals(Camera1A.getInstance())){
                         continue;
                     }
@@ -400,34 +509,6 @@ public class GameManager {
                     }
                     if(isCameraUp && camera.equals(freddy.getCurrentCamera())) {
                         continue;
-                    }
-                    if(freddy.getCurrentCamera().equals(Camera4B.getInstance()) && !Office.getInstance().isRightDoor() && lastCameraCheck > 3020){
-                        synchronized (CAMERA_DOWN_WAIT) {
-                            freddy.moveTo(OfficeCamera.getInstance());
-                            long sleep = random.nextInt(15000,45000);
-                            System.out.println("Freddy entered the office, waiting " + sleep);
-                            Thread.sleep(sleep);
-                            if(foxy.getCurrentCamera().equals(InOfficeCamera.getInstance())) continue;
-                            if(nightRunning && isCameraUp) {
-                                sleep = random.nextInt(10000,20000);
-                                System.out.println("Waiting for camera down, max " + sleep);
-                                CAMERA_DOWN_WAIT.wait(sleep);
-                                if(isCameraUp) {
-                                    if(fnafMain.cameraStage == 11) for (int i = 10; i >= 0; i--) {
-                                        fnafMain.cameraStage = i;
-                                        try {
-                                            Thread.sleep(16);
-                                        } catch (InterruptedException e) {
-                                            throw new RuntimeException(e);
-                                        }
-                                    }
-                                    fnafMain.cameraStage = -1;
-                                    fnafMain.menu = Menu.OFFICE;
-                                }
-                            }
-                            if (nightRunning) FNAFMain.fnafMain.triggerJumpScare("freddy.jump.",27,true);
-                            nightRunning = false;
-                        }
                     }
                     if(move(freddy.getAI_LEVEL())) freddy.move();
                     else System.out.println("Freddy Movement Failed");
@@ -440,7 +521,7 @@ public class GameManager {
         Thread bonnieThread = new Thread(() -> {
             while (nightRunning) {
                 try {
-                    Thread.sleep(4970);
+                    Thread.sleep(bonnieInterval);
                     if(move(bonnie.getAI_LEVEL())) {
                         if(bonnie.getCurrentCamera().equals(OfficeCamera.getInstance())) {
                             if(Office.getInstance().isLeftDoor()){
@@ -454,7 +535,9 @@ public class GameManager {
                                 synchronized (CAMERA_DOWN_WAIT) {
                                     CAMERA_DOWN_WAIT.wait();
                                 }
-                                if(freddy.getCurrentCamera().equals(OfficeCamera.getInstance())) continue;
+                                if(freddy.getCurrentCamera().equals(OfficeCamera.getInstance())) {
+                                    freddy.setCurrentCamera(Camera1A.getInstance());
+                                }
                                 if(foxy.getCurrentCamera().equals(InOfficeCamera.getInstance())) continue;
                                 nightRunning = false;
                                 FNAFMain.fnafMain.triggerJumpScare("bonnie.jump.",10,true);
@@ -473,7 +556,7 @@ public class GameManager {
         Thread chicaThread = new Thread(() -> {
             while (nightRunning) {
                 try {
-                    Thread.sleep(4980);
+                    Thread.sleep(chicaInterval);
                     if(move(chica.getAI_LEVEL())) {
                         if(chica.getCurrentCamera().equals(OfficeCamera.getInstance())) {
                             if(Office.getInstance().isRightDoor()){
@@ -508,7 +591,9 @@ public class GameManager {
                                 synchronized (CAMERA_DOWN_WAIT) {
                                     CAMERA_DOWN_WAIT.wait();
                                 }
-                                if(freddy.getCurrentCamera().equals(OfficeCamera.getInstance())) continue;
+                                if(freddy.getCurrentCamera().equals(OfficeCamera.getInstance())) {
+                                    freddy.setCurrentCamera(Camera1A.getInstance());
+                                }
                                 if(bonnie.getCurrentCamera().equals(InOfficeCamera.getInstance())) continue;
                                 if(foxy.getCurrentCamera().equals(InOfficeCamera.getInstance())) continue;
                                 nightRunning = false;
@@ -528,7 +613,7 @@ public class GameManager {
         Thread foxyThread = new Thread(() -> {
             while (nightRunning) {
                 try {
-                    Thread.sleep(5010);
+                    Thread.sleep(foxyInterval);
                     if(foxy.stillStalledFor() > 0){
                         continue;
                     }
@@ -558,8 +643,13 @@ public class GameManager {
                         if(Office.getInstance().getLeftDoorState() == DoorState.CLOSED){
                             sounds.get("FoxyKnock.ogg").play();
                             power-=foxy.getPowerDrain();
-                            if(foxy.getPowerDrain() == 6) foxy.setPowerDrain(11);
-                            if(foxy.getPowerDrain() == 1) foxy.setPowerDrain(6);
+                            if(ventaNight){
+                                if(foxy.getPowerDrain() == 2) foxy.setPowerDrain(4);
+                                if(foxy.getPowerDrain() == 1) foxy.setPowerDrain(2);
+                            } else {
+                                if(foxy.getPowerDrain() == 6) foxy.setPowerDrain(11);
+                                if(foxy.getPowerDrain() == 1) foxy.setPowerDrain(6);
+                            }
                             foxy.setStage(random.nextInt(2));
                         } else {
                             foxy.setCurrentCamera(InOfficeCamera.getInstance());

@@ -118,6 +118,10 @@ public class Renderer {
         renderTexture(x,y,w,h,0,0,1,1, texture,true, Color.WHITE, hasNoise,noiseStrength);
     }
 
+    public void renderTexture(float x, float y, float w, float h, Texture texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength, Color c){
+        renderTexture(x,y,w,h,0,0,1,1, texture,true, c, hasNoise,noiseStrength);
+    }
+
     public void renderTexture(float x, float y,float w, Texture texture, boolean hasNoise, float noiseStrength){
         float h = w * ((float) texture.getWidth() / texture.getHeight()) /* ((float) this.width / this.height)*/;
         System.out.println(w + " " + h + " " + texture.getWidth() + " " + texture.getHeight() + " " + texture.getAspectRatio());

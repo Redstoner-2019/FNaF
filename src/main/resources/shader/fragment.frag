@@ -30,7 +30,7 @@ void main() {
 
     vec4 textureColor = texture(textureSampler, textureCoord);
 
-    vec4 recoloredColor = textureColor * vec4(color,0);
+    vec4 recoloredColor = textureColor * vec4(color,1);
 
     int pixelsX = 200;
     int pixelsY = 200;
@@ -42,13 +42,5 @@ void main() {
 
     vec4 randomColor = vec4(random(pixelSeed1),random(pixelSeed2),random(pixelSeed3),random(pixelSeed4));
 
-    if(textureColor.a == 0) {
-        //is transparent pixel
-        fragColor = vec4(1,0,1,0);
-    } else {
-        //is not transparent
-        fragColor = lerp(textureColor,randomColor,noiseLevel);
-    }
-
-    fragColor = lerp(textureColor,randomColor,noiseLevel);
+    fragColor = lerp(recoloredColor,randomColor,noiseLevel);
 }

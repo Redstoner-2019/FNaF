@@ -8,5 +8,6 @@ public enum Menu {
     NIGHT_END,
     CUSTOM_NIGHT,
     NIGHT_END_DEATH,
-    NOISE
+    NOISE,
+    SETTINGS
 }
