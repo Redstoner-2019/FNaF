@@ -24,8 +24,6 @@ vec4 lerp(vec4 a, vec4 b, float t) {
 
 
 void main() {
-    //vec4 previousColor = texelFetch(prevFramebuffer, coord, 0);
-
     vec2 textureCoord = (fragTexCoord * texScale) + texOffset;
 
     vec2 txc = textureCoord;
@@ -42,11 +40,6 @@ void main() {
     vec2 pixelSeed3 = vec2(floor(textureCoord.x * pixelsX) + seed,floor(textureCoord.y * pixelsY) + seed);
     vec2 pixelSeed4 = vec2(floor(textureCoord.x * pixelsX) + seed,floor(textureCoord.y * pixelsY) + seed);
 
-    /*vec2 pixelSeed1 = vec2(seed);
-    vec2 pixelSeed2 = vec2(seed);
-    vec2 pixelSeed3 = vec2(seed);
-    vec2 pixelSeed4 = vec2(seed);*/
-
     vec4 randomColor = vec4(random(pixelSeed1),random(pixelSeed2),random(pixelSeed3),random(pixelSeed4));
 
     if(textureColor.a == 0) {
@@ -58,5 +51,4 @@ void main() {
     }
 
     fragColor = lerp(textureColor,randomColor,noiseLevel);
-    //fragColor = vec4(textureColor.xy,textureColor.a,1);
 }

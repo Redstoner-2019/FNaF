@@ -18,7 +18,6 @@ public class Camera1C extends Camera {
     public String getImage(int cameraRandomness, int cameraRandomness2) {
         String name = "cove." + Foxy.getInstance().getStage() + ".";
         name+="png";
-        System.out.println(name);
         return name;
     }
 

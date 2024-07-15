@@ -274,11 +274,13 @@ public class GameManager {
                     if(camera.equals(freddy.getCurrentCamera())) freddy.setStalledUntil(System.currentTimeMillis() + random.nextInt(2000,10000));
                     else freddy.setStalledUntil(System.currentTimeMillis());
                     foxy.setStalledUntil(System.currentTimeMillis() + random.nextInt(2000,20000));
-
-                    synchronized (CAMERA_DOWN_WAIT) {
-                        System.out.println("Camera Down");
-                        CAMERA_DOWN_WAIT.notifyAll();
-                    }
+                    Thread t = new Thread(() -> {
+                        synchronized (CAMERA_DOWN_WAIT) {
+                            System.out.println("Camera Down");
+                            CAMERA_DOWN_WAIT.notifyAll();
+                        }
+                    });
+                    t.start();
                 } else if(isCameraUp && !lastCameraUp){
                     synchronized (CAMERA_UP_WAIT) {
                         CAMERA_UP_WAIT.notifyAll();
@@ -402,9 +404,27 @@ public class GameManager {
                     if(freddy.getCurrentCamera().equals(Camera4B.getInstance()) && !Office.getInstance().isRightDoor() && lastCameraCheck > 3020){
                         synchronized (CAMERA_DOWN_WAIT) {
                             freddy.moveTo(OfficeCamera.getInstance());
-                            Thread.sleep(random.nextInt(15000,45000));
+                            long sleep = random.nextInt(15000,45000);
+                            System.out.println("Freddy entered the office, waiting " + sleep);
+                            Thread.sleep(sleep);
                             if(foxy.getCurrentCamera().equals(InOfficeCamera.getInstance())) continue;
-                            if(nightRunning && isCameraUp) CAMERA_DOWN_WAIT.wait();
+                            if(nightRunning && isCameraUp) {
+                                sleep = random.nextInt(10000,20000);
+                                System.out.println("Waiting for camera down, max " + sleep);
+                                CAMERA_DOWN_WAIT.wait(sleep);
+                                if(isCameraUp) {
+                                    if(fnafMain.cameraStage == 11) for (int i = 10; i >= 0; i--) {
+                                        fnafMain.cameraStage = i;
+                                        try {
+                                            Thread.sleep(16);
+                                        } catch (InterruptedException e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                    }
+                                    fnafMain.cameraStage = -1;
+                                    fnafMain.menu = Menu.OFFICE;
+                                }
+                            }
                             if (nightRunning) FNAFMain.fnafMain.triggerJumpScare("freddy.jump.",27,true);
                             nightRunning = false;
                         }
@@ -434,7 +454,7 @@ public class GameManager {
                                 synchronized (CAMERA_DOWN_WAIT) {
                                     CAMERA_DOWN_WAIT.wait();
                                 }
-                                if(freddy.getCurrentCamera().equals(InOfficeCamera.getInstance())) continue;
+                                if(freddy.getCurrentCamera().equals(OfficeCamera.getInstance())) continue;
                                 if(foxy.getCurrentCamera().equals(InOfficeCamera.getInstance())) continue;
                                 nightRunning = false;
                                 FNAFMain.fnafMain.triggerJumpScare("bonnie.jump.",10,true);
@@ -488,6 +508,7 @@ public class GameManager {
                                 synchronized (CAMERA_DOWN_WAIT) {
                                     CAMERA_DOWN_WAIT.wait();
                                 }
+                                if(freddy.getCurrentCamera().equals(OfficeCamera.getInstance())) continue;
                                 if(bonnie.getCurrentCamera().equals(InOfficeCamera.getInstance())) continue;
                                 if(foxy.getCurrentCamera().equals(InOfficeCamera.getInstance())) continue;
                                 nightRunning = false;

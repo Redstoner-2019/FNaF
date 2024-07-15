@@ -189,7 +189,31 @@ public class FNAFMain {
 
                 Office office = Office.getInstance();
 
-                if(menu == Menu.OFFICE) {
+                float offset = 25;
+
+                if(menu == Menu.MAIN_MENU){
+                    if(mouseX[0] >= 140 && mouseX[0] <= 440) {
+                        if (mouseY[0] >= 410 - offset && mouseY[0] <= 460 - offset) {
+                            menu = Menu.PRE_GAME;
+                            startTime = System.currentTimeMillis();
+                            //nightNumber = 6;
+                        } else if (mouseY[0] >= 350 - offset && mouseY[0] <= 400 - offset) {
+                            menu = Menu.PRE_GAME;
+                            startTime = System.currentTimeMillis();
+                            //nightNumber = 6;
+                        } else if (mouseY[0] >= 470 - offset && mouseY[0] <= 520 - offset) {
+                            menu = Menu.PRE_GAME;
+                            startTime = System.currentTimeMillis();
+                            nightNumber = 6;
+                        } else if (mouseY[0] >= 530 - offset && mouseY[0] <= 580 - offset) {
+                            Freddy.getInstance().setAI_LEVEL(1);
+                            Bonnie.getInstance().setAI_LEVEL(3);
+                            Chica.getInstance().setAI_LEVEL(3);
+                            Foxy.getInstance().setAI_LEVEL(2);
+                            menu = Menu.CUSTOM_NIGHT;
+                        }
+                    }
+                }else if(menu == Menu.OFFICE) {
                     if(!gameManager.isPowerout()) {
                         mx-=scroll;
                         if(between(-1.9f,-1.95f,mx) && between(-0.5,0.05,my)){
@@ -603,42 +627,13 @@ public class FNAFMain {
                         if(mouseX[0] >= 140 && mouseX[0] <= 440) {
                             if (mouseY[0] >= 410 - offset && mouseY[0] <= 460 - offset) {
                                 selection = 1;
-                                if (isMouseClicked) {
-                                    menu = Menu.PRE_GAME;
-                                    startTime = System.currentTimeMillis();
-                                    System.out.println("Continue");
-                                }
                             } else if (mouseY[0] >= 350 - offset && mouseY[0] <= 400 - offset) {
                                 selection = 0;
-                                if (isMouseClicked) {
-                                    System.out.println("test");
-                                    menu = Menu.PRE_GAME;
-                                    startTime = System.currentTimeMillis();
-                                    System.out.println("test");
-                                    nightNumber = 1;
-                                    System.out.println("New Game");
-                                }
                             } else if (mouseY[0] >= 470 - offset && mouseY[0] <= 520 - offset) {
                                 selection = 2;
-                                if (isMouseClicked) {
-                                    menu = Menu.PRE_GAME;
-                                    startTime = System.currentTimeMillis();
-                                    nightNumber = 6;
-                                }
                             } else if (mouseY[0] >= 530 - offset && mouseY[0] <= 580 - offset) {
                                 selection = 3;
-                                if (isMouseClicked) {
-                                    Freddy.getInstance().setAI_LEVEL(1);
-                                    Bonnie.getInstance().setAI_LEVEL(3);
-                                    Chica.getInstance().setAI_LEVEL(3);
-                                    Foxy.getInstance().setAI_LEVEL(4);
-                                    menu = Menu.CUSTOM_NIGHT;
-                                }
                             }
-                        }
-
-                        if(isMouseClicked) {
-                            isMouseClicked = false;
                         }
 
                         if(menuSelection != selection){
@@ -662,8 +657,6 @@ public class FNAFMain {
                         if(scroll > 1) scroll = 1;
                         if(scroll < -1) scroll = -1;
 
-                        //System.out.println(cameraStage);
-
                         if(between(0.25f,0.75f,mouseX[0] / width) && between(0.85f,100f,mouseY[0] / height) && !gameManager.isPowerout()){
                             if(hasExitedCameraButton) {
                                 Thread t = new Thread(new Runnable() {
@@ -676,7 +669,6 @@ public class FNAFMain {
                                             } catch (InterruptedException e) {
                                                 throw new RuntimeException(e);
                                             }
-                                            System.out.println("increasing " + i);
                                         }
                                         cameraStage = 11;
                                         menu = Menu.CAMERAS;
@@ -707,7 +699,6 @@ public class FNAFMain {
                                             } catch (InterruptedException e) {
                                                 throw new RuntimeException(e);
                                             }
-                                            System.out.println("decreasing " + i);
                                         }
                                         cameraStage = -1;
                                     }
@@ -740,6 +731,21 @@ public class FNAFMain {
             if(menu.equals(Menu.CAMERAS) && gameManager.isPowerout()) menu = Menu.OFFICE;
 
             Office office = Office.getInstance();
+
+            int ventaBlackLengthMs = 160000;
+            long timeUntilVentBlack = System.currentTimeMillis() - (gameManager.getNightStart() + GameManager.NIGHT_LENGTH) + ventaBlackLengthMs;
+
+            if((Freddy.getInstance().getAI_LEVEL() + Bonnie.getInstance().getAI_LEVEL() + Chica.getInstance().getAI_LEVEL() + Foxy.getInstance().getAI_LEVEL()) / 4 >= 10) if(gameManager.isNightRunning() && timeUntilVentBlack >= 0)
+            {
+                sounds.get("ventablack.ogg").play();
+                sounds.get("Ambiance1.ogg").stop();
+                sounds.get("Ambiance1.ogg").setRepeating(false);
+            } else if(timeUntilVentBlack >= -1000){
+                sounds.get("Ambiance1.ogg").setVolume(0.3f * (Math.abs(timeUntilVentBlack) / 1000.0f));
+            } else {
+                sounds.get("Ambiance1.ogg").play();
+                sounds.get("Ambiance1.ogg").setRepeating(true);
+            }
 
             if (jumpscare == null) switch (menu) {
                 case MAIN_MENU : {
@@ -806,7 +812,7 @@ public class FNAFMain {
                         sounds.get("fan.oga").setRepeating(true);
                         sounds.get("Ambiance1.ogg").play();
                         sounds.get("Ambiance1.ogg").setRepeating(true);
-                        //gameManager.startNight(nightNumber);
+
                         if(nightNumber <= 6) gameManager.startNight(nightNumber);
                         else gameManager.startNight(7,Bonnie.getInstance().getAI_LEVEL(),Chica.getInstance().getAI_LEVEL(),Freddy.getInstance().getAI_LEVEL(),Foxy.getInstance().getAI_LEVEL());
                         if(nightNumber > 5) nightNumber = 5;

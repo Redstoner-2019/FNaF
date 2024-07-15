@@ -121,21 +121,26 @@ public class Sound {
     }
     public int getLength(){
         int sizeInBytes = alGetBufferi(bufferId, AL_SIZE);
-        //int frequency = alGetBufferi(bufferId, AL_FREQUENCY);
+
         int channels = alGetBufferi(bufferId, AL_CHANNELS);
         int bitsPerSample = alGetBufferi(bufferId, AL_BITS);
 
         int bytesPerSample = channels * (bitsPerSample / 8);
+
+        if(bytesPerSample == 0) bytesPerSample = 2;
+
         return sizeInBytes / bytesPerSample;
     }
 
     public String getCurrentTime(){
         int frequency = alGetBufferi(bufferId, AL_FREQUENCY);
+        if(frequency == 0) frequency = 44100;
         return alGetSourcei(sourceId, AL_SAMPLE_OFFSET) / frequency + "s";
     }
 
     public String getTotalLength(){
         int frequency = alGetBufferi(bufferId, AL_FREQUENCY);
+        if(frequency == 0) frequency = 44100;
         return getLength() / frequency + "s";
     }
 }
