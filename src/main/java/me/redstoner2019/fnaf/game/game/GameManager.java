@@ -259,6 +259,16 @@ public class GameManager {
                             nightRunning = false;
                             if(fnafMain.nightNumber < 5) fnafMain.nightNumber++;
 
+                            System.out.println("Night " + night + " completed");
+
+                            if(night == 5) fnafMain.night6Unlocked = true;
+                            if(night == 6) fnafMain.customNightUnlocked = true;
+                            if(night == 7 && bonnieAI + chicaAI + freddyAI + foxyAI == 80) fnafMain.ventaBlackNightUnlocked = true;
+                            if(night == 8) fnafMain.ventaBlackNightCompleted = true;
+                            System.out.println("Night " + night + " completed");
+
+                            fnafMain.save();
+
                             try {
                                 FileOutputStream outputStream = new FileOutputStream(new File("save.txt"));
                                 outputStream.write(fnafMain.nightNumber);
@@ -273,7 +283,75 @@ public class GameManager {
                             }
 
                             stopAllSounds();
-                            if(customNight || ventaNight){
+
+                            if(night == 5){
+                                fnafMain.menu = Menu.ENDING_WEEK_END;
+                                sounds.get("powerout.ogg").play();
+                                try {
+                                    Thread.sleep(20000);
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+
+                            if(night == 6){
+                                fnafMain.menu = Menu.ENDING_WEEK_OVERTIME;
+                                sounds.get("powerout.ogg").play();
+                                System.out.println(sounds.get("powerout.ogg").getVolume());
+                                try {
+                                    Thread.sleep(20000);
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+
+                            if(night == 7 || night == 8){
+                                fnafMain.menu = Menu.ENDING_FIRED;
+                                sounds.get("powerout.ogg").play();
+                                sounds.get("powerout.ogg").setVolume(.6f);
+                                sounds.get("Ventablack.ogx").setVolume(0);
+                                sounds.get("Ventablack.ogx").play();
+                                long timer = System.currentTimeMillis();
+                                try {
+                                    Thread.sleep(3000);
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                                while (System.currentTimeMillis() - timer < 20000) {
+                                    try {
+                                        int sleep = (int) Math.min(random.nextInt(fnafMain.menu == Menu.ENDING_VENTA ? 100 : 200,fnafMain.menu == Menu.ENDING_VENTA ? 200 : 1500),20000 - (System.currentTimeMillis() - timer));
+                                        System.out.println(sleep);
+                                        Thread.sleep(sleep);
+                                        if(fnafMain.menu == Menu.ENDING_FIRED) {
+                                            sounds.get("Static2.ogg").play();
+                                            sounds.get("Static2.ogg").setVolume(.6f);
+                                            fnafMain.menu = Menu.ENDING_VENTA;
+                                            sounds.get("Ventablack.ogx").setVolume(5);
+                                        } else {
+                                            sounds.get("Static2.ogg").stop();
+                                            fnafMain.menu = Menu.ENDING_FIRED;
+                                            sounds.get("Ventablack.ogx").setVolume(0);
+                                        }
+                                    } catch (InterruptedException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                                sounds.get("scream.ogg").play();
+                                sounds.get("Static2.ogg").play();
+                                sounds.get("Static2.ogg").setVolume(.6f);
+                                fnafMain.menu = Menu.ENDING_VENTA;
+                                sounds.get("Ventablack.ogx").setVolume(100);
+                                try {
+                                    Thread.sleep(500);
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+
+                            stopAllSounds();
+                            sounds.get("powerout.ogg").setVolume(1);
+
+                            if(customNight || ventaNight || night == 5){
                                 fnafMain.menu = Menu.MAIN_MENU;
                                 sounds.get("Static2.ogg").play();
                                 sounds.get("Mainmenu1.ogg").play();

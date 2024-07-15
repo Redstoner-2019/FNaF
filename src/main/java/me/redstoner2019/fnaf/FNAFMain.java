@@ -1,6 +1,7 @@
 package me.redstoner2019.fnaf;
 
-import me.redstoner2019.Main;
+import me.redstoner2019.graphics.general.TextureProvider;
+import me.redstoner2019.graphics.general.Util;
 import me.redstoner2019.audio.Sound;
 import me.redstoner2019.audio.SoundManager;
 import me.redstoner2019.fnaf.game.DoorState;
@@ -11,7 +12,7 @@ import me.redstoner2019.fnaf.game.animatronics.Foxy;
 import me.redstoner2019.fnaf.game.animatronics.Freddy;
 import me.redstoner2019.fnaf.game.cameras.*;
 import me.redstoner2019.fnaf.game.game.GameManager;
-import me.redstoner2019.graphics.Renderer;
+import me.redstoner2019.graphics.general.Renderer;
 import me.redstoner2019.graphics.general.IOUtil;
 import me.redstoner2019.graphics.general.Texture;
 import org.json.JSONObject;
@@ -40,7 +41,7 @@ public class FNAFMain {
     public static int height = 720;
     public static float aspectRatio;
     private boolean showDebug = false;
-    private HashMap<String,Texture> textures = new HashMap<>();
+    private TextureProvider textures = TextureProvider.getInstance();
     public static HashMap<String, Sound> sounds = new HashMap<>();
     private Renderer renderer;
     private double mouseX[] = new double[1];
@@ -66,6 +67,16 @@ public class FNAFMain {
     public int cameraStage = -1;
     private boolean isCtrlDown = false;
 
+    public boolean night6Unlocked = false;
+    public boolean customNightUnlocked = false;
+    public boolean ventaBlackNightUnlocked = false;
+    public boolean ventaBlackNightCompleted = false;
+
+    private int freddyAI = 8;
+    private int bonnieAI = 0;
+    private int chicaAI = 0;
+    private int foxyAI = 8;
+
     public FNAFMain() {
         fnafMain = this;
     }
@@ -82,8 +93,9 @@ public class FNAFMain {
         this.jumpscare = jumpscare;
     }
 
-    public void run(int night) throws IOException {
-        nightNumber = night;
+    public void run() throws IOException {
+        load();
+        save();
         init();
         loop();
     }
@@ -353,22 +365,26 @@ public class FNAFMain {
                         if (mouseY[0] >= 410 - offset && mouseY[0] <= 460 - offset) {
                             menu = Menu.PRE_GAME;
                             startTime = System.currentTimeMillis();
-                            //nightNumber = 6;
-                        } else if (mouseY[0] >= 350 - offset && mouseY[0] <= 400 - offset) {
+                            save();
+                            load();
+                        } else if (mouseY[0] >= 330 - offset && mouseY[0] <= 400 - offset) {
                             menu = Menu.PRE_GAME;
                             startTime = System.currentTimeMillis();
                             nightNumber = 1;
-                        } else if (mouseY[0] >= 470 - offset && mouseY[0] <= 520 - offset) {
+                            save();
+                            load();
+                        } else if (mouseY[0] >= 470 - offset && mouseY[0] <= 520 - offset && night6Unlocked) {
                             menu = Menu.PRE_GAME;
                             startTime = System.currentTimeMillis();
                             nightNumber = 6;
-                        } else if (mouseY[0] >= 530 - offset && mouseY[0] <= 580 - offset) {
-                            Freddy.getInstance().setAI_LEVEL(20);
-                            Bonnie.getInstance().setAI_LEVEL(20);
-                            Chica.getInstance().setAI_LEVEL(20);
-                            Foxy.getInstance().setAI_LEVEL(20);
+                        } else if (mouseY[0] >= 530 - offset && mouseY[0] <= 580 - offset && customNightUnlocked) {
+                            load();
+                            Freddy.getInstance().setAI_LEVEL(freddyAI);
+                            Bonnie.getInstance().setAI_LEVEL(bonnieAI);
+                            Chica.getInstance().setAI_LEVEL(chicaAI);
+                            Foxy.getInstance().setAI_LEVEL(foxyAI);
                             menu = Menu.CUSTOM_NIGHT;
-                        } else if (mouseY[0] >= 590 - offset && mouseY[0] <= 640 - offset) {
+                        } else if (mouseY[0] >= 590 - offset && mouseY[0] <= 640 - offset && ventaBlackNightUnlocked) {
                             menu = Menu.PRE_GAME;
                             startTime = System.currentTimeMillis();
                             nightNumber = 8;
@@ -542,6 +558,7 @@ public class FNAFMain {
                         sounds.get("blip.ogg").stop();
                         sounds.get("blip.ogg").play();
                         menu = Menu.MAIN_MENU;
+                        save();
                     }
                 } else if (menu == Menu.CUSTOM_NIGHT){
                     boolean yOnButtons = between(0.5,0.65,my);
@@ -599,6 +616,11 @@ public class FNAFMain {
                         sounds.get("blip.ogg").stop();
                         sounds.get("blip.ogg").play();
                         startTime = System.currentTimeMillis();
+                        freddyAI = Freddy.getInstance().getAI_LEVEL();
+                        bonnieAI = Bonnie.getInstance().getAI_LEVEL();
+                        chicaAI = Chica.getInstance().getAI_LEVEL();
+                        foxyAI = Foxy.getInstance().getAI_LEVEL();
+                        save();
                         menu = Menu.PRE_GAME;
                         nightNumber = 7;
                     }
@@ -607,6 +629,12 @@ public class FNAFMain {
                         sounds.get("blip.ogg").stop();
                         sounds.get("blip.ogg").play();
                         menu = Menu.MAIN_MENU;
+                        startTime = System.currentTimeMillis();
+                        freddyAI = Freddy.getInstance().getAI_LEVEL();
+                        bonnieAI = Bonnie.getInstance().getAI_LEVEL();
+                        chicaAI = Chica.getInstance().getAI_LEVEL();
+                        foxyAI = Foxy.getInstance().getAI_LEVEL();
+                        save();
                     }
                 }
             } else if (action == GLFW.GLFW_RELEASE) {
@@ -762,7 +790,7 @@ public class FNAFMain {
                     }
                 }
 
-                fan_stage++;
+                fan_stage+=4;
 
                 /**
                  * Door Management
@@ -788,7 +816,7 @@ public class FNAFMain {
                     if(office.getRightDoorAnimation() == -1) office.setRightDoorState(DoorState.OPEN);
                 }
 
-                if(fan_stage == 2) fan_stage = 0;
+                if(fan_stage >= 30) fan_stage = 0;
             }
 
             /**
@@ -929,6 +957,8 @@ public class FNAFMain {
 
             Office office = Office.getInstance();
 
+            textures.get("test").getId();
+
             long timeUntilVentBlack = System.currentTimeMillis() - (gameManager.getNightStart() + gameManager.getNIGHT_LENGTH()) + (sounds.get("Ventablack.ogx").getLengthMS() * 1000);
 
             if(!gameManager.ventaNight && (Freddy.getInstance().getAI_LEVEL() + Bonnie.getInstance().getAI_LEVEL() + Chica.getInstance().getAI_LEVEL() + Foxy.getInstance().getAI_LEVEL()) / 4 >= 0) if(gameManager.isNightRunning() && timeUntilVentBlack >= 0)
@@ -936,6 +966,8 @@ public class FNAFMain {
                 sounds.get("Ventablack.ogx").setVolume(1f);
                 sounds.get("Ventablack.ogx").play();
             }
+
+            textures.get("test").getId();
 
             if (jumpscare == null) switch (menu) {
                 case MAIN_MENU : {
@@ -974,10 +1006,10 @@ public class FNAFMain {
                     renderer.renderText("New Game", 140, 350,50, Color.WHITE);
                     renderer.renderText("Continue", 140, 420,50, Color.WHITE);
                     renderer.renderText("Night " + nightNumber, 140, 432,25, Color.WHITE);
-                    renderer.renderText("6th Night", 140, 490,50, Color.WHITE);
-                    renderer.renderText("Custom Night", 140, 560,50, Color.WHITE);
-                    renderer.renderText("Venta Black Night", 140, 630,50, Color.GRAY);
-                    renderer.renderText("Settings", 140, 700,50, Color.GRAY);
+                    renderer.renderText(night6Unlocked ?  "6th Night" : obfuscateText("6th Night"), 140, 490,50,  night6Unlocked ? Color.WHITE : Color.GRAY);
+                    renderer.renderText(customNightUnlocked ?  "Custom Night" : obfuscateText("Custom Night"), 140, 560,50,  customNightUnlocked ? Color.WHITE : Color.GRAY);
+                    renderer.renderText(ventaBlackNightUnlocked ?  "Venta Black Night" : obfuscateText("Venta Black Night"), 140, 630,50, ventaBlackNightUnlocked ? Color.WHITE : Color.GRAY);
+                    renderer.renderText("Settings", 140, 700,50, Color.WHITE);
 
                     switch (menuSelection) {
                         case 0 -> renderer.renderText(">>", 70, 350,50, Color.WHITE);
@@ -989,6 +1021,11 @@ public class FNAFMain {
                     }
 
                     renderer.renderText("v1.0.1", 10, height-20,20, Color.WHITE);
+
+                    renderer.renderTexture(.15f,.75f,.1f,.1f * ((float) width / height),textures.get(night6Unlocked ? "star.png" : "star.empty.png"),false,false,0);
+                    renderer.renderTexture(.35f,.75f,.1f,.1f * ((float) width / height),textures.get(customNightUnlocked ? "star.png" : "star.empty.png"),false,false,0);
+                    renderer.renderTexture(.55f,.75f,.1f,.1f * ((float) width / height),textures.get(ventaBlackNightUnlocked ? "star.png" : "star.empty.png"),false,false,0);
+                    renderer.renderTexture(.75f,.7f,.15f,.15f * ((float) width / height),textures.get(ventaBlackNightCompleted ? "star.png" : "star.empty.png"),false,false,0);
                     break;
                 }
                 case PRE_GAME : {
@@ -1014,6 +1051,8 @@ public class FNAFMain {
                         if(nightNumber > 5) nightNumber = 5;
 
                         if(gameManager.isVentaNight()) sounds.get("ventablacklong.ogg").play();
+
+                        load();
                     }
                     break;
                 }
@@ -1065,13 +1104,17 @@ public class FNAFMain {
                     float w = w0*1.25f;
                     float h = w0*textures.get("fan.1.png").getAspectRatio();
                     h = w0*3.2f;
-                    if(!gameManager.isPowerout()) switch (fan_stage) {
+                    if(!gameManager.isPowerout()) switch ((int) ((float)fan_stage/10.0f)) {
                         case 0: {
-                            renderer.renderTexture((scroll * 0.25f) - 0.03f,-0.385f,w,h,textures.get("fan.1.png"),true,false,0);
+                            renderer.renderTexture((scroll * 0.25f) - 0.03f,-0.385f,w,h,textures.get("fan.1.png"),false,false,0);
                             break;
                         }
                         case 1: {
-                            renderer.renderTexture((scroll * 0.25f) - 0.03f,-0.385f,w,h,textures.get("fan.2.png"),true,false,0);
+                            renderer.renderTexture((scroll * 0.25f) - 0.03f,-0.385f,w,h,textures.get("fan.2.png"),false,false,0);
+                            break;
+                        }
+                        case 2: {
+                            renderer.renderTexture((scroll * 0.25f) - 0.03f,-0.385f,w,h,textures.get("fan.3.png"),false,false,0);
                         }
                     }
                     String textureLeft;
@@ -1224,6 +1267,22 @@ public class FNAFMain {
                     renderer.renderTexture(-1,-1,2,2,textures.get("loose.png"),true,true,1);
                     break;
                 }
+                case ENDING_WEEK_END : {
+                    renderer.renderTexture(-1,-1,2,2,textures.get("ending.week.end.png"),true,false,0);
+                    break;
+                }
+                case ENDING_WEEK_OVERTIME : {
+                    renderer.renderTexture(-1,-1,2,2,textures.get("ending.week.overtime.png"),true,false,0);
+                    break;
+                }
+                case ENDING_FIRED : {
+                    renderer.renderTexture(-1,-1,2,2,textures.get("ending.fired.png"),true,false,0);
+                    break;
+                }
+                case ENDING_VENTA : {
+                    renderer.renderTexture(-1,-1,2,2,textures.get("golden.freddy.png"),true,true,.9f);
+                    break;
+                }
                 case CUSTOM_NIGHT : {
                     float aspectRatio = (float) width /height;
                     float fontSize = 0.046f*width;
@@ -1343,30 +1402,21 @@ public class FNAFMain {
         boolean enableLogging = true;
 
         File f = new File("crash-report.txt");
-        File data = new File("save.txt");
-        if(!f.exists()) f.createNewFile();
-        if(!data.exists()) {
-            data.createNewFile();
-            FileOutputStream outputStream = new FileOutputStream(new File("save.txt"));
-            outputStream.write(1);
-        }
-
-        FileInputStream inputStream = new FileInputStream(data);
-
         PrintStream debugStream = new PrintStream(new FileOutputStream(f));
 
         if(enableLogging){
             System.setOut(debugStream);
             System.setErr(debugStream);
         }
-        int nightNumber = inputStream.read();
-        if(nightNumber > 5) nightNumber = 5;
-        System.out.println(nightNumber);
 
         try {
-            new FNAFMain().run(nightNumber);
+            new FNAFMain().run();
         } catch (Exception e) {
-            //System.exit(0);
+            System.out.println("\n\n\n\n");
+            System.out.println("--- Crash ---");
+            System.out.println(System.currentTimeMillis());
+            System.out.println("\n\n\n\n");
+
             debugStream.println(e.toString());
 
             StackTraceElement[] trace = e.getStackTrace();
@@ -1497,5 +1547,94 @@ public class FNAFMain {
             stbi_image_free(pixels32);
             stbi_image_free(pixels16);
         }
+    }
+
+    public void load(){
+        soundManager = SoundManager.getInstance();
+        try {
+            File data = new File("data.json");
+            if(!data.exists()) {
+                data.createNewFile();
+                JSONObject saveData = new JSONObject();
+                saveData.put("night",1);
+                saveData.put("volume",.5f);
+                saveData.put("freddy-ai",freddyAI);
+                saveData.put("bonnie-ai",bonnieAI);
+                saveData.put("chica-ai",chicaAI);
+                saveData.put("foxy-ai",foxyAI);
+                JSONObject unlocks = new JSONObject();
+                unlocks.put("night-6",false);
+                unlocks.put("custom-night",false);
+                unlocks.put("venta-black-night",false);
+                unlocks.put("venta-black-night-completed",false);
+                saveData.put("unlocks",unlocks);
+                Util.writeStringToFile(saveData.toString(),data);
+            }
+            JSONObject object = new JSONObject(Util.readFile(data));
+            JSONObject unlocks = object.getJSONObject("unlocks");
+            soundManager.setVolume(object.getFloat("volume"));
+            this.customNightUnlocked = unlocks.getBoolean("custom-night");
+            this.night6Unlocked = unlocks.getBoolean("night-6");
+            this.ventaBlackNightUnlocked = unlocks.getBoolean("venta-black-night");
+            this.ventaBlackNightCompleted = unlocks.getBoolean("venta-black-night-completed");
+            this.nightNumber = object.getInt("night");
+
+            this.freddyAI = object.getInt("freddy-ai");
+            this.bonnieAI = object.getInt("bonnie-ai");
+            this.chicaAI = object.getInt("chica-ai");
+            this.foxyAI = object.getInt("foxy-ai");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void save(){
+        try {
+            File data = new File("data.json");
+            if(!data.exists()) {
+                data.createNewFile();
+                JSONObject saveData = new JSONObject();
+                saveData.put("night",1);
+                saveData.put("volume",.5f);
+                saveData.put("freddy-ai",freddyAI);
+                saveData.put("bonnie-ai",bonnieAI);
+                saveData.put("chica-ai",chicaAI);
+                saveData.put("foxy-ai",foxyAI);
+                JSONObject unlocks = new JSONObject();
+                unlocks.put("night-6",false);
+                unlocks.put("custom-night",false);
+                unlocks.put("venta-black-night",false);
+                unlocks.put("venta-black-night-completed",false);
+                saveData.put("unlocks",unlocks);
+                Util.writeStringToFile(saveData.toString(),data);
+            } else {
+                JSONObject saveData = new JSONObject();
+                saveData.put("night",this.nightNumber);
+                saveData.put("volume",soundManager.getVolume());
+                saveData.put("freddy-ai",freddyAI);
+                saveData.put("bonnie-ai",bonnieAI);
+                saveData.put("chica-ai",chicaAI);
+                saveData.put("foxy-ai",foxyAI);
+                JSONObject unlocks = new JSONObject();
+                unlocks.put("night-6",this.night6Unlocked);
+                unlocks.put("custom-night",this.customNightUnlocked);
+                unlocks.put("venta-black-night",this.ventaBlackNightUnlocked);
+                unlocks.put("venta-black-night-completed",this.ventaBlackNightCompleted);
+                saveData.put("unlocks",unlocks);
+                Util.writeStringToFile(saveData.toString(),data);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String obfuscateText(String text){
+        String chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012346789";
+        StringBuilder returnVal = new StringBuilder();
+        for(char c : text.toCharArray()){
+            c = chars.toCharArray()[random.nextInt(chars.length())];
+            returnVal.append(c);
+        }
+        return returnVal.toString();
     }
 }

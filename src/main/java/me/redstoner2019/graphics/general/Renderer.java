@@ -1,9 +1,5 @@
-package me.redstoner2019.graphics;
+package me.redstoner2019.graphics.general;
 
-import me.redstoner2019.Frame;
-import me.redstoner2019.graphics.general.Shader;
-import me.redstoner2019.graphics.general.ShaderProgram;
-import me.redstoner2019.graphics.general.Texture;
 import org.lwjgl.opengl.*;
 import org.lwjgl.stb.STBTTAlignedQuad;
 import org.lwjgl.stb.STBTTBakedChar;
@@ -11,15 +7,8 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;

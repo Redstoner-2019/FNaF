@@ -1,19 +1,15 @@
 package me.redstoner2019;
 
+import me.redstoner2019.graphics.general.Util;
 import org.json.JSONObject;
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class Main {
+public class FileMappingsGenerator {
     public static void main(String[] args) throws IOException {
         prepare();
     }

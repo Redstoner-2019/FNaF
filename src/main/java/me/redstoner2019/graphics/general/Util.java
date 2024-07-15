@@ -1,4 +1,4 @@
-package me.redstoner2019;
+package me.redstoner2019.graphics.general;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;

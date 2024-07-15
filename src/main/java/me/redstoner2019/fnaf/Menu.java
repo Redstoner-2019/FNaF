@@ -9,5 +9,9 @@ public enum Menu {
     CUSTOM_NIGHT,
     NIGHT_END_DEATH,
     NOISE,
-    SETTINGS
+    SETTINGS,
+    ENDING_WEEK_END,
+    ENDING_WEEK_OVERTIME,
+    ENDING_FIRED,
+    ENDING_VENTA
 }
