@@ -94,8 +94,24 @@ public class Freddy extends Animatronic{
         System.out.println(" to " + getCurrentCamera().getCameraName());
         if(getCurrentCamera().equals(FNAFMain.fnafMain.gameManager.getCamera())) FNAFMain.fnafMain.glitchStrength = 1;
         int laugh = new Random().nextInt(1,4);
-        System.out.println(laugh);
         FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").stop();
+        switch (getCurrentCamera().getCameraName()) {
+            case "Camera1B" -> {
+                FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(10,3f);
+            }
+            case "Camera7" -> {
+                FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(20,2.5f);
+            }
+            case "Camera6" -> {
+                FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(45,2f);
+            }
+            case "Camera4A" -> {
+                FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(45,1.5f);
+            }
+            case "Camera4B" -> {
+                FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(65,1);
+            }
+        }
         FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").play();
     }
 

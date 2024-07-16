@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
+import static java.lang.Math.*;
 import static org.lwjgl.openal.AL10.*;
 import static org.lwjgl.openal.AL11.AL_SAMPLE_OFFSET;
 import static org.lwjgl.stb.STBVorbis.*;
@@ -73,6 +74,27 @@ public class Sound {
         free(rawAudioBuffer);
 
         updateGain();
+    }
+
+    public void setSourcePositionAtAngle(float angle, float distance) {
+        angle/=2;
+        float radians = (float) (angle * (PI / 180.0f)); // Convert degrees to radians
+        float x = (float) (distance * cos(radians));
+        float y = (float) (distance * sin(radians));
+        float z = 0.0f; // Assuming 2D plane for simplicity
+
+        alSource3f(sourceId, AL_POSITION, x, y, z);
+    }
+
+    public void setAngle(float angle, float distance){
+        alSource3f(sourceId, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+        alSource3f(sourceId, AL_DIRECTION, 0.0f, 0.0f, 1.0f);
+        setSourcePositionAtAngle(angle, distance);
+
+        System.out.println(filepath + " now at " + angle + "° " + distance);
+    }
+    public void setAngle(float angle){
+        setAngle(angle, 1);
     }
 
     public void delete(){

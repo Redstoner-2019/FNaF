@@ -392,9 +392,11 @@ public class GameManager {
                     if(Chica.getInstance().getCurrentCamera().equals(Camera6.getInstance())) {
                         if(random.nextInt(1000) == 1){
                             if(camera.equals(Camera6.getInstance())) {
+                                sounds.get("chica_kitchen1.oga").setAngle(0);
                                 sounds.get("chica_kitchen1.oga").setVolume(0.7f);
                                 sounds.get("chica_kitchen1.oga").play();
                             } else {
+                                sounds.get("chica_kitchen1.oga").setAngle(45f);
                                 sounds.get("chica_kitchen1.oga").setVolume(0.2f);
                                 sounds.get("chica_kitchen1.oga").play();
                             }
