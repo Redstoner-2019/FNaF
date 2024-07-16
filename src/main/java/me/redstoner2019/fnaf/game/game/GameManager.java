@@ -305,7 +305,17 @@ public class GameManager {
                                 }
                             }
 
-                            if(night == 7 || night == 8){
+                            if(night == 7){
+                                fnafMain.menu = Menu.ENDING_FIRED;
+                                sounds.get("powerout.ogg").play();
+                                try {
+                                    Thread.sleep(20000);
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+
+                            if(night == 8){
                                 fnafMain.menu = Menu.ENDING_FIRED;
                                 sounds.get("powerout.ogg").play();
                                 sounds.get("powerout.ogg").setVolume(.6f);
@@ -351,7 +361,7 @@ public class GameManager {
                             stopAllSounds();
                             sounds.get("powerout.ogg").setVolume(1);
 
-                            if(customNight || ventaNight || night == 5){
+                            if(customNight || ventaNight || night == 5 || night == 6){
                                 fnafMain.menu = Menu.MAIN_MENU;
                                 sounds.get("Static2.ogg").play();
                                 sounds.get("Mainmenu1.ogg").play();

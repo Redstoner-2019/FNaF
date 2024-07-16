@@ -1020,7 +1020,7 @@ public class FNAFMain {
                         case 5 -> renderer.renderText(">>", 70, 700,50, Color.WHITE);
                     }
 
-                    renderer.renderText("v1.0.1", 10, height-20,20, Color.WHITE);
+                    renderer.renderText("v1.1.0", 10, height-20,20, Color.WHITE);
 
                     renderer.renderTexture(.15f,.75f,.1f,.1f * ((float) width / height),textures.get(night6Unlocked ? "star.png" : "star.empty.png"),false,false,0);
                     renderer.renderTexture(.35f,.75f,.1f,.1f * ((float) width / height),textures.get(customNightUnlocked ? "star.png" : "star.empty.png"),false,false,0);
