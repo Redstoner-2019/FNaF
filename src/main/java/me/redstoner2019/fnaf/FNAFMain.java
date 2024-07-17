@@ -1153,7 +1153,10 @@ public class FNAFMain {
                         else gameManager.startNight(0,0,0,0,0);
                         if(nightNumber > 5) nightNumber = 5;
 
-                        if(gameManager.isVentaNight()) sounds.get("ventablacklong.ogg").play();
+                        if(gameManager.isVentaNight()) {
+                            sounds.get("ventablacklong.ogg").setVolume(.75f);
+                            sounds.get("ventablacklong.ogg").play();
+                        }
 
                         load();
                     }

@@ -7,7 +7,7 @@ public class Foxy extends Animatronic{
     private static Foxy INSTANCE;
     private int stage = 0;
     private long stalledUntil = 0;
-    private int powerDrain = 1;
+    private int powerDrain = 0;
     private long leftCove = -1;
     private int run_animation_image = -1;
 

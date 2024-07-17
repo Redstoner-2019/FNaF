@@ -159,6 +159,7 @@ public class GameManager {
         foxy.setCurrentCamera(Camera1C.getInstance());
         foxy.setStage(0);
         foxy.setRun_animation_image(-1);
+        foxy.setPowerDrain(0);
 
         switch (night) {
             case 1 -> {
@@ -732,14 +733,16 @@ public class GameManager {
 
                         if(Office.getInstance().getLeftDoorState() == DoorState.CLOSED){
                             sounds.get("FoxyKnock.ogg").play();
-                            power-=foxy.getPowerDrain();
                             if(ventaNight){
                                 if(foxy.getPowerDrain() == 2) foxy.setPowerDrain(4);
                                 if(foxy.getPowerDrain() == 1) foxy.setPowerDrain(2);
+                                if(foxy.getPowerDrain() == 0) foxy.setPowerDrain(1);
                             } else {
                                 if(foxy.getPowerDrain() == 6) foxy.setPowerDrain(11);
                                 if(foxy.getPowerDrain() == 1) foxy.setPowerDrain(6);
+                                if(foxy.getPowerDrain() == 0) foxy.setPowerDrain(1);
                             }
+                            power-=foxy.getPowerDrain();
                             foxy.setStage(random.nextInt(2));
                         } else {
                             foxy.setCurrentCamera(InOfficeCamera.getInstance());
