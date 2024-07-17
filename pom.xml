@@ -58,6 +58,13 @@
         <lwjgl.natives>natives-windows</lwjgl.natives>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <profiles>
         <profile>
             <id>Linux-x64</id>
@@ -146,6 +153,16 @@
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>com.github.Redstoner-2019</groupId>
+            <artifactId>AuthenticationServer</artifactId>
+            <version>v1.0.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.Redstoner-2019</groupId>
+            <artifactId>ODServerAPI</artifactId>
+            <version>v1.0.2</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.json/json -->
         <dependency>
             <groupId>org.json</groupId>

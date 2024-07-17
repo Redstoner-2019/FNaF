@@ -4,6 +4,7 @@ import me.redstoner2019.fnaf.FNAFMain;
 import me.redstoner2019.fnaf.Menu;
 import me.redstoner2019.fnaf.game.Distribution;
 import me.redstoner2019.fnaf.game.DoorState;
+import me.redstoner2019.fnaf.game.NightConfiguration;
 import me.redstoner2019.fnaf.game.Office;
 import me.redstoner2019.fnaf.game.animatronics.Bonnie;
 import me.redstoner2019.fnaf.game.animatronics.Chica;
@@ -109,7 +110,7 @@ public class GameManager {
     }
 
     public void startNight(int night){
-        startNight(night,0,0,0,0);
+        startNight(NightConfiguration.getNight(night));
     }
 
     public boolean isVentaNight() {
@@ -128,7 +129,7 @@ public class GameManager {
         this.customNight = customNight;
     }
 
-    public void startNight(int night, int bonnieAI, int chicaAI, int freddyAI, int foxyAI){
+    public void startNight(NightConfiguration nightConfiguration){
         if(nightRunning) return;
         nightStart = System.currentTimeMillis();
         nightRunning = true;
@@ -137,7 +138,8 @@ public class GameManager {
         power = 100;
         isBlackout = false;
         isPowerout = false;
-        nightNumber = night;
+        nightNumber = nightConfiguration.getNightNumber();
+        int night = nightConfiguration.getNightNumber();
 
         Office.getInstance().setRightDoor(false);
         Office.getInstance().setLeftDoor(false);
@@ -161,7 +163,28 @@ public class GameManager {
         foxy.setRun_animation_image(-1);
         foxy.setPowerDrain(0);
 
-        switch (night) {
+        freddy.setAI_LEVEL(nightConfiguration.getFreddyAI());
+        bonnie.setAI_LEVEL(nightConfiguration.getBonnieAI());
+        chica.setAI_LEVEL(nightConfiguration.getChicaAI());
+        foxy.setAI_LEVEL(nightConfiguration.getFoxyAI());
+
+        freddyInterval = nightConfiguration.getFreddyMovementSpeed();
+        bonnieInterval = nightConfiguration.getBonnieMovementSpeed();
+        chicaInterval = nightConfiguration.getChicaMovementSpeed();
+        foxyInterval = nightConfiguration.getFoxyMovementSpeed();
+
+        if(night == 7){
+            customNight = true;
+        }
+        if(night == 8){
+            ventaNight = true;
+            freddyInterval = 2920;
+            bonnieInterval = 3970;
+            chicaInterval = 3980;
+            foxyInterval = 4010;
+        }
+
+        /*switch (night) {
             case 1 -> {
                 freddy.setAI_LEVEL(0);
                 bonnie.setAI_LEVEL(0);
@@ -222,7 +245,7 @@ public class GameManager {
                 foxy.setAI_LEVEL(foxyAI);
                 customNight = true;
             }
-        }
+        }*/
 
         Thread mainManagement = new Thread(() -> {
             GameManager gameManager = getInstance();
@@ -247,6 +270,7 @@ public class GameManager {
                             }
                         }
                         case 6 -> {
+                            if(nightConfiguration.isEndlessNight()) continue;
                             stopAllSounds();
                             nightRunning = false;
                             FNAFMain.fnafMain.menu = Menu.NIGHT_END;
@@ -264,7 +288,7 @@ public class GameManager {
 
                             if(night == 5) fnafMain.night6Unlocked = true;
                             if(night == 6) fnafMain.customNightUnlocked = true;
-                            if(night == 7 && bonnieAI + chicaAI + freddyAI + foxyAI == 80) fnafMain.ventaBlackNightUnlocked = true;
+                            if(night == 7 && nightConfiguration.getBonnieAI() + nightConfiguration.getChicaAI() + nightConfiguration.getFreddyAI() + nightConfiguration.getFoxyAI() == 80) fnafMain.ventaBlackNightUnlocked = true;
                             if(night == 8) fnafMain.ventaBlackNightCompleted = true;
                             System.out.println("Night " + night + " completed");
 
@@ -380,7 +404,7 @@ public class GameManager {
 
                 if(!isPowerout){
                     if(random.nextInt(200000) == 1){
-                        sounds.get("Circus.ogg").setVolume(0.1f);
+                        sounds.get("Circus.ogg").setVolume(0.3f);
                         sounds.get("Circus.ogg").play();
                     }
 
@@ -405,7 +429,7 @@ public class GameManager {
                     }
 
                     if(Freddy.getInstance().getCurrentCamera().equals(Camera6.getInstance()) && isCameraUp) {
-                        if(random.nextInt(1000) == 1){
+                        if(random.nextInt(10) == 1){
                             if(camera.equals(Camera6.getInstance())) {
                                 sounds.get("powerout.ogg").setVolume(0.1f);
                                 sounds.get("powerout.ogg").play();
@@ -506,8 +530,21 @@ public class GameManager {
                 if(!nightRunning) freddyOfficeEnter.interrupt();
 
                 if(power > 0 && gameManager.isNightRunning()) {
-                    power -= ((idleUsage + usage) * deltaTime);
-                    if(power == 0) power = -1;
+                    float difficulty = getDifficulty();
+                    float minReg = 0f;
+                    float maxReg = 2;
+
+                    float reg = minReg + ((maxReg - minReg) * difficulty);
+
+                    System.out.println(reg);
+
+                    if(usage == 0 && nightConfiguration.isEndlessNight()){
+                        power = Math.min(power + (reg * deltaTime * idleUsage), 100);
+                    } else {
+                        power -= ((idleUsage + usage) * deltaTime);
+                        if(power == 0) power = -1;
+                    }
+
                 } else if(power < 0 && gameManager.isNightRunning() && !isPowerout) {
                     power = 0;
                     stopAllSounds();
@@ -799,5 +836,15 @@ public class GameManager {
         } while (result < a || result > b);
 
         return (int) result;
+    }
+
+    public float getDifficulty(){
+        int animatronicAI = Freddy.getInstance().getAI_LEVEL() + Foxy.getInstance().getAI_LEVEL() + Bonnie.getInstance().getAI_LEVEL() + Chica.getInstance().getAI_LEVEL();
+        int animatronicSpeed = freddyInterval + foxyInterval + bonnieInterval + chicaInterval;
+
+        float aniAI = animatronicAI / 80f;
+        float aniSpeed = (animatronicSpeed - 400f) / (9500f * 4f);
+
+        return aniAI * aniSpeed;
     }
 }

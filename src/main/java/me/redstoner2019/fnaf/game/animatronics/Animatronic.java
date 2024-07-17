@@ -6,6 +6,14 @@ public abstract class Animatronic {
     private Camera currentCamera;
     private int AI_LEVEL = 0;
 
+    public void increaseAI_LEVEL(){
+AI_LEVEL++;
+    }
+
+    public void decreaseAI_LEVEL(){
+AI_LEVEL--;
+    }
+
     public Animatronic(){
 
     }

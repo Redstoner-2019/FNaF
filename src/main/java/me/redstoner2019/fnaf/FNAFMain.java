@@ -1,5 +1,6 @@
 package me.redstoner2019.fnaf;
 
+import me.redstoner2019.fnaf.game.NightConfiguration;
 import me.redstoner2019.graphics.font.TextRenderer;
 import me.redstoner2019.graphics.general.TextureProvider;
 import me.redstoner2019.graphics.general.Util;
@@ -29,6 +30,7 @@ import java.nio.IntBuffer;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static me.redstoner2019.fnaf.Menu.CUSTOM_NIGHT;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
 import static org.lwjgl.opengl.GL11.*;
@@ -67,8 +69,10 @@ public class FNAFMain {
     public long startTime = 0;
     public int cameraStage = -1;
     private boolean isCtrlDown = false;
+    private boolean isShiftDown = false;
     private boolean vsync = false;
     private boolean exactNightTime = false;
+    private long nightEndTime = 0;
 
     public boolean night6Unlocked = false;
     public boolean customNightUnlocked = false;
@@ -79,6 +83,13 @@ public class FNAFMain {
     private int bonnieAI = 0;
     private int chicaAI = 0;
     private int foxyAI = 8;
+
+    private String usernameInput = "Redstoner-2019";
+    private String passwordInput = "";
+    private boolean textBoxUsernameSelected = true;
+    private boolean textBoxPasswordSelected = false;
+
+    private NightConfiguration nightConfiguration = new NightConfiguration(freddyAI,bonnieAI,chicaAI,foxyAI);
 
     private Renderer renderer;
     private TextRenderer textRenderer;
@@ -291,6 +302,14 @@ public class FNAFMain {
                 if ((key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL) && action == GLFW_PRESS) {
                     isCtrlDown = true;
                 }
+
+                if ((key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT) && action == GLFW_RELEASE) {
+                    isShiftDown = false;
+                }
+                if ((key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT) && action == GLFW_PRESS) {
+                    isShiftDown = true;
+                }
+
                 if (key == GLFW_KEY_V && action == GLFW_RELEASE) {
                     sounds.get("ventablacklong.ogg").play();
                 }
@@ -407,7 +426,7 @@ public class FNAFMain {
                             Bonnie.getInstance().setAI_LEVEL(bonnieAI);
                             Chica.getInstance().setAI_LEVEL(chicaAI);
                             Foxy.getInstance().setAI_LEVEL(foxyAI);
-                            menu = Menu.CUSTOM_NIGHT;
+                            menu = CUSTOM_NIGHT;
                         }
                         if(between(optionsYOffset + (optionsFontSize * 5.1f), optionsYOffset + (optionsFontSize * 5.9f),mouseY[0])){
                             menu = Menu.PRE_GAME;
@@ -648,56 +667,148 @@ public class FNAFMain {
 
                         save();
                     }
-                } else if (menu == Menu.CUSTOM_NIGHT){
-                    boolean yOnButtons = between(0.5,0.65,my);
 
-                    int adder = 1;
-                    if(isCtrlDown){
-                        adder = 5;
+                    mod = height / 1080f;
+                    checkBoxX = ((-.1f+1)/2f) * width - 1.5f *fontSize;
+                    checkBoxY = ((.96f+1)/2f) * height - fontSize;
+                    fontSize = 60 * mod;
+
+                    if(between(checkBoxX,checkBoxX + fontSize,mouseX[0]) && between(checkBoxY,checkBoxY + fontSize,mouseY[0])){
+                        sounds.get("blip.ogg").stop();
+                        sounds.get("blip.ogg").play();
+                        nightConfiguration.setEndlessNight(!nightConfiguration.isEndlessNight());
+
+                        save();
+                    }
+                } else if (menu == CUSTOM_NIGHT){
+                    boolean yOnAI = between(0.15,0.3,my);
+                    boolean yOnMovement = between(0.5,0.65,my);
+
+                    float mod = height / 1080f;
+                    float fontSize = 60 * mod;
+                    float checkBoxX = ((-.1f+1)/2f) * width - 1.5f *fontSize;
+                    float checkBoxY = ((.96f+1)/2f) * height - fontSize;
+
+                    System.out.println(mx + " " + my);
+
+                    if(between(-0.15,-0.28,mx) && between(0.78f,0.9f,my)){
+                        sounds.get("blip.ogg").stop();
+                        sounds.get("blip.ogg").play();
+                        nightConfiguration.setEndlessNight(!nightConfiguration.isEndlessNight());
+
+                        save();
                     }
 
-                    if(yOnButtons){
+                    int adder = 1;
+
+                    if(yOnAI){
+                        adder = 1;
+                        if(isCtrlDown){
+                            adder = 5;
+                        }
+                    } else if(yOnMovement){
+                        adder = 100;
+                        if(isCtrlDown && !isShiftDown){
+                            adder = 1000;
+                        }
+                        if(isShiftDown && !isCtrlDown){
+                            adder = 10;
+                        }
+                        if(isShiftDown && isCtrlDown){
+                            adder = 1;
+                        }
+                    }
+
+
+
+                    if(yOnAI){
                         if(between(-.95,-.85,mx)){
                             sounds.get("blip.ogg").stop();
                             sounds.get("blip.ogg").play();
-                            Freddy.getInstance().setAI_LEVEL(Math.max(0, Math.min(Freddy.getInstance().getAI_LEVEL()-adder,20)));
+                            nightConfiguration.setFreddyAI(Math.max(0, Math.min(nightConfiguration.getFreddyAI()-adder,20)));
                         }
                         if(between(-.45,-.35,mx)){
                             sounds.get("blip.ogg").stop();
                             sounds.get("blip.ogg").play();
-                            Bonnie.getInstance().setAI_LEVEL(Math.max(0, Math.min(Bonnie.getInstance().getAI_LEVEL()-adder,20)));
+                            nightConfiguration.setBonnieAI(Math.max(0, Math.min(nightConfiguration.getBonnieAI()-adder,20)));
                         }
                         if(between(.05,.15,mx)){
                             sounds.get("blip.ogg").stop();
                             sounds.get("blip.ogg").play();
-                            Chica.getInstance().setAI_LEVEL(Math.max(0, Math.min(Chica.getInstance().getAI_LEVEL()-adder,20)));
+                            nightConfiguration.setChicaAI(Math.max(0, Math.min(nightConfiguration.getChicaAI()-adder,20)));
                         }
                         if(between(.55,.65,mx)){
                             sounds.get("blip.ogg").stop();
                             sounds.get("blip.ogg").play();
-                            Foxy.getInstance().setAI_LEVEL(Math.max(0, Math.min(Foxy.getInstance().getAI_LEVEL()-adder,20)));
+                            nightConfiguration.setFoxyAI(Math.max(0, Math.min(nightConfiguration.getFoxyAI()-adder,20)));
                         }
                         if(between(-.55,-.65,mx)){
                             sounds.get("blip.ogg").stop();
                             sounds.get("blip.ogg").play();
-                            Freddy.getInstance().setAI_LEVEL(Math.max(0, Math.min(Freddy.getInstance().getAI_LEVEL()+adder,20)));
+                            nightConfiguration.setFreddyAI(Math.max(0, Math.min(nightConfiguration.getFreddyAI()+adder,20)));
                         }
                         if(between(-.15,-.05,mx)){
                             sounds.get("blip.ogg").stop();
                             sounds.get("blip.ogg").play();
-                            Bonnie.getInstance().setAI_LEVEL(Math.max(0, Math.min(Bonnie.getInstance().getAI_LEVEL()+adder,20)));
+                            nightConfiguration.setBonnieAI(Math.max(0, Math.min(nightConfiguration.getBonnieAI()+adder,20)));
                         }
                         if(between(.35,.45,mx)){
                             sounds.get("blip.ogg").stop();
                             sounds.get("blip.ogg").play();
-                            Chica.getInstance().setAI_LEVEL(Math.max(0, Math.min(Chica.getInstance().getAI_LEVEL()+adder,20)));
+                            nightConfiguration.setChicaAI(Math.max(0, Math.min(nightConfiguration.getChicaAI()+adder,20)));
                         }
                         if(between(.85,.95,mx)){
                             sounds.get("blip.ogg").stop();
                             sounds.get("blip.ogg").play();
-                            Foxy.getInstance().setAI_LEVEL(Math.max(0, Math.min(Foxy.getInstance().getAI_LEVEL()+adder,20)));
+                            nightConfiguration.setFoxyAI(Math.max(0, Math.min(nightConfiguration.getFoxyAI()+adder,20)));
                         }
                     }
+
+
+
+                    if(yOnMovement){
+                        if(between(-.95,-.85,mx)){
+                            sounds.get("blip.ogg").stop();
+                            sounds.get("blip.ogg").play();
+                            nightConfiguration.setFreddyMovementSpeed(Math.max(100, Math.min(nightConfiguration.getFreddyMovementSpeed()-adder,9990)));
+                        }
+                        if(between(-.45,-.35,mx)){
+                            sounds.get("blip.ogg").stop();
+                            sounds.get("blip.ogg").play();
+                            nightConfiguration.setBonnieMovementSpeed(Math.max(100, Math.min(nightConfiguration.getBonnieMovementSpeed()-adder,9990)));
+                        }
+                        if(between(.05,.15,mx)){
+                            sounds.get("blip.ogg").stop();
+                            sounds.get("blip.ogg").play();
+                            nightConfiguration.setChicaMovementSpeed(Math.max(100, Math.min(nightConfiguration.getChicaMovementSpeed()-adder,9990)));
+                        }
+                        if(between(.55,.65,mx)){
+                            sounds.get("blip.ogg").stop();
+                            sounds.get("blip.ogg").play();
+                            nightConfiguration.setFoxyMovementSpeed(Math.max(100, Math.min(nightConfiguration.getFoxyMovementSpeed()-adder,9990)));
+                        }
+                        if(between(-.55,-.65,mx)){
+                            sounds.get("blip.ogg").stop();
+                            sounds.get("blip.ogg").play();
+                            nightConfiguration.setFreddyMovementSpeed(Math.max(100, Math.min(nightConfiguration.getFreddyMovementSpeed()+adder,9990)));
+                        }
+                        if(between(-.15,-.05,mx)){
+                            sounds.get("blip.ogg").stop();
+                            sounds.get("blip.ogg").play();
+                            nightConfiguration.setBonnieMovementSpeed(Math.max(100, Math.min(nightConfiguration.getBonnieMovementSpeed()+adder,9990)));
+                        }
+                        if(between(.35,.45,mx)){
+                            sounds.get("blip.ogg").stop();
+                            sounds.get("blip.ogg").play();
+                            nightConfiguration.setChicaMovementSpeed(Math.max(100, Math.min(nightConfiguration.getChicaMovementSpeed()+adder,9990)));
+                        }
+                        if(between(.85,.95,mx)){
+                            sounds.get("blip.ogg").stop();
+                            sounds.get("blip.ogg").play();
+                            nightConfiguration.setFoxyMovementSpeed(Math.max(100, Math.min(nightConfiguration.getFoxyMovementSpeed()+adder,9990)));
+                        }
+                    }
+
 
                     if(between(0.7,1,mx) && between(0.7,1,my)){
                         System.out.println("start");
@@ -1148,9 +1259,12 @@ public class FNAFMain {
                         sounds.get("Ambiance1.ogg").setRepeating(true);
 
                         if(nightNumber <= 6) gameManager.startNight(nightNumber);
-                        else if(nightNumber == 7) gameManager.startNight(7,Bonnie.getInstance().getAI_LEVEL(),Chica.getInstance().getAI_LEVEL(),Freddy.getInstance().getAI_LEVEL(),Foxy.getInstance().getAI_LEVEL());
+                        else if(nightNumber == 7) {
+                            nightConfiguration.setNightNumber(7);
+                            gameManager.startNight(nightConfiguration);
+                        }
                         else if(nightNumber == 8) gameManager.startNight(nightNumber);
-                        else gameManager.startNight(0,0,0,0,0);
+                        else gameManager.startNight(new NightConfiguration(0,0,0,0));
                         if(nightNumber > 5) nightNumber = 5;
 
                         if(gameManager.isVentaNight()) {
@@ -1268,6 +1382,9 @@ public class FNAFMain {
                     } else {
                         currentTime = gameManager.getHour() == 0 ? "12 AM" : gameManager.getHour() + " AM";
                     }
+                    if(nightConfiguration.isEndlessNight()){
+                        currentTime = formatTime(System.currentTimeMillis() - gameManager.getNightStart());
+                    }
 
                     textRenderer.renderTextOld(currentTime,width - textRenderer.textWidth(currentTime,fontSize) - rightOffset,fontSize + rightOffset,fontSize,Color.WHITE);
                     textRenderer.renderTextOld(nightText,width - textRenderer.textWidth(nightText,fontSize) - rightOffset,fontSize * 2 + rightOffset,fontSize,Color.WHITE);
@@ -1374,6 +1491,10 @@ public class FNAFMain {
                         currentTime = gameManager.getHour() == 0 ? "12 AM" : gameManager.getHour() + " AM";
                     }
 
+                    if(nightConfiguration.isEndlessNight()){
+                        currentTime = formatTime(System.currentTimeMillis() - gameManager.getNightStart());
+                    }
+
                     textRenderer.renderTextOld(currentTime,width - textRenderer.textWidth(currentTime,fontSize) - rightOffset,fontSize + rightOffset,fontSize,Color.WHITE);
                     textRenderer.renderTextOld(nightText,width - textRenderer.textWidth(nightText,fontSize) - rightOffset,fontSize * 2 + rightOffset,fontSize,Color.WHITE);
 
@@ -1389,6 +1510,14 @@ public class FNAFMain {
                 }
                 case NIGHT_END_DEATH : {
                     renderer.renderTexture(-1,-1,2,2,textures.get("loose.png"),true,false,0);
+                    if(nightConfiguration.isEndlessNight()){
+                        String text = "You survived for " + formatTimeNormal(nightEndTime - gameManager.getNightStart());
+                        float w = textRenderer.textWidth(text,60 * (height / 1080f));
+
+                        w = (width - w) / 2;
+
+                        textRenderer.renderText(text,w,(height-60 * (height / 1080f)) / 2,60 * (height / 1080f),Color.WHITE);
+                    }
                     if(nightNumber > 5) nightNumber = 5;
                     break;
                 }
@@ -1417,45 +1546,75 @@ public class FNAFMain {
                 case CUSTOM_NIGHT : {
                     float aspectRatio = (float) width /height;
                     float fontSize = 0.046f*width;
+                    float x = (float) (.3 - (textRenderer.textWidth(">", fontSize) / width));
+                    float x0 = textRenderer.textWidth("0", fontSize) / width;
 
                     //TODO: custom night rendering
 
-                    textRenderer.renderTextOld("Customize Night",(width-textRenderer.textWidth("Customize Night",fontSize * 1.3f)) / 2.1f,((-0.8f + 1) / 2) * width,fontSize * 1.3f,Color.WHITE);
+                    textRenderer.renderTextOld("Customize Night",(width-textRenderer.textWidth("Customize Night",fontSize * 1.3f)) / 2.1f,((-0.85f + 1) / 2) * width,fontSize * 1.3f,Color.WHITE);
 
-                    renderer.renderTexture(-0.9f,-0.3f,0.3f,0.3f * aspectRatio,textures.get("freddy.png"),false,false,0);
-                    renderer.renderTexture(-0.4f,-0.3f,0.3f,0.3f * aspectRatio,textures.get("bonnie.png"),false,false,0);
-                    renderer.renderTexture(0.1f,-0.3f,0.3f,0.3f * aspectRatio,textures.get("chica.png"),false,false,0);
-                    renderer.renderTexture(0.6f,-0.3f,0.3f,0.3f * aspectRatio,textures.get("foxy.png"),false,false,0);
+                    renderer.renderTexture(-0.9f,0,0.3f,0.3f * aspectRatio,textures.get("freddy.png"),false,false,0);
+                    renderer.renderTexture(-0.4f,0,0.3f,0.3f * aspectRatio,textures.get("bonnie.png"),false,false,0);
+                    renderer.renderTexture(0.1f,0,0.3f,0.3f * aspectRatio,textures.get("chica.png"),false,false,0);
+                    renderer.renderTexture(0.6f,0,0.3f,0.3f * aspectRatio,textures.get("foxy.png"),false,false,0);
 
-                    textRenderer.renderTextOld("Freddy", ((-0.9f+1)/2f) * width, ((-0.3f+1)/2f) * height,fontSize * 1.3f,Color.WHITE);
-                    textRenderer.renderTextOld("Bonnie", ((-0.4f+1)/2f) * width, ((-0.3f+1)/2f) * height,fontSize * 1.3f,Color.WHITE);
-                    textRenderer.renderTextOld("Chica", ((.125f+1)/2f) * width, ((-0.3f+1)/2f) * height,fontSize * 1.3f,Color.WHITE);
-                    textRenderer.renderTextOld("Foxy", ((.65f+1)/2f) * width, ((-0.3f+1)/2f) * height,fontSize * 1.3f,Color.WHITE);
+                    textRenderer.renderTextOld("Freddy", ((-0.9f+1)/2f) * width, ((-0.55f+1)/2f) * height,fontSize * 1.3f,Color.WHITE);
+                    textRenderer.renderTextOld("Bonnie", ((-0.4f+1)/2f) * width, ((-0.55f+1)/2f) * height,fontSize * 1.3f,Color.WHITE);
+                    textRenderer.renderTextOld("Chica", ((.125f+1)/2f) * width, ((-0.55f+1)/2f) * height,fontSize * 1.3f,Color.WHITE);
+                    textRenderer.renderTextOld("Foxy", ((.65f+1)/2f) * width, ((-0.55f+1)/2f) * height,fontSize * 1.3f,Color.WHITE);
 
-                    textRenderer.renderTextOld("A.I. Level",((-.9f+1)/2f) * width, ((.55f+1)/2f) * height, fontSize,Color.WHITE);
-                    textRenderer.renderTextOld("A.I. Level",((-.4f+1)/2f) * width, ((.55f+1)/2f) * height,fontSize,Color.WHITE);
-                    textRenderer.renderTextOld("A.I. Level",((.1f+1)/2f) * width, ((.55f+1)/2f) * height,fontSize,Color.WHITE);
-                    textRenderer.renderTextOld("A.I. Level",((.6f+1)/2f) * width, ((.55f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld("A.I. Level",((-.9f+1)/2f) * width, ((.2f+1)/2f) * height, fontSize,Color.WHITE);
+                    textRenderer.renderTextOld("A.I. Level",((-.4f+1)/2f) * width, ((.2f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld("A.I. Level",((.1f+1)/2f) * width, ((.2f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld("A.I. Level",((.6f+1)/2f) * width, ((.2f+1)/2f) * height,fontSize,Color.WHITE);
+
+                    textRenderer.renderTextOld("Movement",((-.9f+1)/2f) * width, ((.55f+1)/2f) * height, fontSize,Color.WHITE);
+                    textRenderer.renderTextOld("Movement",((-.4f+1)/2f) * width, ((.55f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld("Movement",((.1f+1)/2f) * width, ((.55f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld("Movement",((.6f+1)/2f) * width, ((.55f+1)/2f) * height,fontSize,Color.WHITE);
+
+                    textRenderer.renderTextOld("<",((-.9f+1)/2f) * width, ((.35f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld("<",((-.4f+1)/2f) * width, ((.35f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld("<",((.1f+1)/2f) * width, ((.35f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld("<",((.6f+1)/2f) * width, ((.35f+1)/2f) * height,fontSize,Color.WHITE);
+
+                    textRenderer.renderTextOld(">", (((-.9f + x) + 1) / 2f) * width, ((.35f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld(">", (((-.4f + x) + 1) / 2f) * width, ((.35f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld(">", (((.1f + x) + 1) / 2f) * width, ((.35f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld(">", (((.6f + x) + 1) / 2f) * width, ((.35f+1)/2f) * height,fontSize,Color.WHITE);
 
                     textRenderer.renderTextOld("<",((-.9f+1)/2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
                     textRenderer.renderTextOld("<",((-.4f+1)/2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
                     textRenderer.renderTextOld("<",((.1f+1)/2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
                     textRenderer.renderTextOld("<",((.6f+1)/2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
 
-                    float x = (float) (.3 - (textRenderer.textWidth(">", fontSize) / width));
-                    float x0 = textRenderer.textWidth("0", fontSize) / width;
-
                     textRenderer.renderTextOld(">", (((-.9f + x) + 1) / 2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
                     textRenderer.renderTextOld(">", (((-.4f + x) + 1) / 2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
                     textRenderer.renderTextOld(">", (((.1f + x) + 1) / 2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
                     textRenderer.renderTextOld(">", (((.6f + x) + 1) / 2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
 
-                    textRenderer.renderTextOld(String.format("%02d", Freddy.getInstance().getAI_LEVEL()), (((-.9f + x - (6 * x0)) + 1) / 2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
-                    textRenderer.renderTextOld(String.format("%02d", Bonnie.getInstance().getAI_LEVEL()), (((-.4f + x - (6 * x0)) + 1) / 2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
-                    textRenderer.renderTextOld(String.format("%02d", Chica.getInstance().getAI_LEVEL()), (((.1f + x - (6 * x0)) + 1) / 2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
-                    textRenderer.renderTextOld(String.format("%02d", Foxy.getInstance().getAI_LEVEL()), (((.6f + x - (6 * x0)) + 1) / 2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld(String.format("%02d", nightConfiguration.getFreddyAI()), (((-.9f + x - (6 * x0)) + 1) / 2f) * width, ((.35f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld(String.format("%02d", nightConfiguration.getBonnieAI()), (((-.4f + x - (6 * x0)) + 1) / 2f) * width, ((.35f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld(String.format("%02d", nightConfiguration.getChicaAI()), (((.1f + x - (6 * x0)) + 1) / 2f) * width, ((.35f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld(String.format("%02d", nightConfiguration.getFoxyAI()), (((.6f + x - (6 * x0)) + 1) / 2f) * width, ((.35f+1)/2f) * height,fontSize,Color.WHITE);
 
-                    textRenderer.renderTextOld("(0-2) easy    (3-6)med    (7-12)hard   (12+)extreme", ((-.5f+1)/2f) * width, ((.9f+1)/2f) * height,fontSize * 0.6f,Color.WHITE);
+                    textRenderer.renderTextOld(String.format("%04d", nightConfiguration.getFreddyMovementSpeed()), (((-.9f + x - (11.5f * x0)) + 1) / 2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld(String.format("%04d", nightConfiguration.getBonnieMovementSpeed()), (((-.4f + x - (11.5f * x0)) + 1) / 2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld(String.format("%04d", nightConfiguration.getChicaMovementSpeed()), (((.1f + x - (11.5f * x0)) + 1) / 2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
+                    textRenderer.renderTextOld(String.format("%04d", nightConfiguration.getFoxyMovementSpeed()), (((.6f + x - (11.5f * x0)) + 1) / 2f) * width, ((.7f+1)/2f) * height,fontSize,Color.WHITE);
+
+                    Texture white = textures.get("white.png");
+                    float mod = height / 1080f;
+                    float checkBoxX = ((-.1f+1)/2f) * width - 1.5f *fontSize;
+                    float checkBoxY = ((.96f+1)/2f) * height - fontSize;
+                    float selectedSize = 40;
+                    fontSize = 60 * mod;
+
+                    renderer.renderTextureCoordinatesBounds(checkBoxX,checkBoxY,checkBoxX + fontSize,checkBoxY + fontSize,white,true,false,0);
+                    renderer.renderTextureCoordinatesBounds(checkBoxX + (mod * 5),checkBoxY + (mod * 5),checkBoxX + fontSize - (mod * 5),checkBoxY + fontSize - (mod * 5),white,true,false,0, Color.BLACK);
+                    if(nightConfiguration.isEndlessNight()) renderer.renderTextureCoordinatesBounds(checkBoxX + ((fontSize - (mod * selectedSize)) / 2),checkBoxY + ((fontSize - (mod * selectedSize)) / 2),checkBoxX + ((fontSize + (mod * selectedSize)) / 2),checkBoxY + ((fontSize + (mod * selectedSize)) / 2),white,true,false,0, Color.WHITE);
+
+                    textRenderer.renderTextOld("Endless Mode", ((-.1f+1)/2f) * width, ((.925f+1)/2f) * height,fontSize,Color.WHITE);
 
                     textRenderer.renderTextOld("Start", ((.7f+1)/2f) * width, ((.95f+1)/2f) * height,fontSize * 1.3f,Color.WHITE);
                     textRenderer.renderTextOld("Back", ((-.95f+1)/2f) * width, ((.95f+1)/2f) * height,fontSize * 1.3f,Color.WHITE);
@@ -1493,7 +1652,31 @@ public class FNAFMain {
                     if(exactNightTime) renderer.renderTextureCoordinatesBounds(checkBoxX + ((fontSize - (mod * selectedSize)) / 2),checkBoxY + ((fontSize - (mod * selectedSize)) / 2),checkBoxX + ((fontSize + (mod * selectedSize)) / 2),checkBoxY + ((fontSize + (mod * selectedSize)) / 2),white,true,false,0, Color.WHITE);
                     textRenderer.renderText("Exact Nighttime  (Display Nighttime as 12:04AM instead of 12AM)",checkBoxX * 2.5f, checkBoxY,fontSize,Color.WHITE);
 
-                    textRenderer.renderText("Back", fontSize, height - fontSize,fontSize,Color.WHITE);
+
+                    checkBoxY = fontSize * 9;
+
+                    float textBoxOffset = 6 * checkBoxX;
+
+                    renderer.renderTextureCoordinatesBounds(textBoxOffset,checkBoxY,width - checkBoxX,checkBoxY + fontSize,white,true,false,0,Color.WHITE);
+                    renderer.renderTextureCoordinatesBounds(textBoxOffset + (5 * mod),checkBoxY + (5 * mod),width - checkBoxX - (5 * mod),checkBoxY + fontSize - (5 * mod),white,true,false,0,Color.BLACK);
+                    textRenderer.renderText(usernameInput,textBoxOffset + (20 * mod),checkBoxY,fontSize,Color.WHITE);
+                    textRenderer.renderText("Username:",checkBoxX + (20 * mod),checkBoxY,fontSize,Color.WHITE);
+
+
+                    checkBoxY = fontSize * 11;
+
+                    renderer.renderTextureCoordinatesBounds(textBoxOffset,checkBoxY,width - checkBoxX,checkBoxY + fontSize,white,true,false,0,Color.WHITE);
+                    renderer.renderTextureCoordinatesBounds(textBoxOffset + (5 * mod),checkBoxY + (5 * mod),width - checkBoxX - (5 * mod),checkBoxY + fontSize - (5 * mod),white,true,false,0,Color.BLACK);
+                    textRenderer.renderText("*******",textBoxOffset + (20 * mod),checkBoxY,fontSize,Color.WHITE);
+                    textRenderer.renderText("Password:",checkBoxX + (20 * mod),checkBoxY,fontSize,Color.WHITE);
+
+                    checkBoxY = fontSize * 13;
+
+                    renderer.renderTextureCoordinates(checkBoxX + (20 * mod),checkBoxY,textRenderer.textWidth("Login", fontSize) + (40 * mod),fontSize,white,true,false,0,Color.WHITE);
+                    renderer.renderTextureCoordinates(checkBoxX + (5 * mod) + (20 * mod),checkBoxY + (5 * mod),textRenderer.textWidth("Login", fontSize) + (30 * mod),fontSize - (10 * mod),white,true,false,0,Color.BLACK);
+                    textRenderer.renderText("Login",checkBoxX + (40 * mod),checkBoxY,fontSize,Color.WHITE);
+
+                    textRenderer.renderText("Back", fontSize, (height - (fontSize * 2) * mod),fontSize,Color.WHITE);
                     break;
                 }
             }
@@ -1553,7 +1736,11 @@ public class FNAFMain {
     }
 
     public static void main(String[] args) throws IOException {
-        boolean enableLogging = false;
+        boolean enableLogging = true;
+
+        if(args.length == 1){
+            enableLogging = Boolean.valueOf(args[0]);
+        }
 
         File f = new File("crash-report.txt");
         PrintStream debugStream = new PrintStream(new FileOutputStream(f));
@@ -1586,6 +1773,7 @@ public class FNAFMain {
     }
 
     public void triggerJumpScare(final String jumpscare, int frames, boolean endGame){
+        this.nightEndTime = System.currentTimeMillis();
         this.jumpscare = jumpscare;
         FNAFMain m = this;
         if(endGame) sounds.get("scream.ogg").play();
@@ -1712,10 +1900,16 @@ public class FNAFMain {
                 JSONObject saveData = new JSONObject();
                 saveData.put("night",1);
                 saveData.put("volume",.5f);
-                saveData.put("freddy-ai",freddyAI);
-                saveData.put("bonnie-ai",bonnieAI);
-                saveData.put("chica-ai",chicaAI);
-                saveData.put("foxy-ai",foxyAI);
+                saveData.put("freddy-ai",nightConfiguration.getFreddyAI());
+                saveData.put("bonnie-ai",nightConfiguration.getBonnieAI());
+                saveData.put("chica-ai",nightConfiguration.getChicaAI());
+                saveData.put("foxy-ai",nightConfiguration.getFoxyAI());
+                saveData.put("freddy-speed",nightConfiguration.getFreddyMovementSpeed());
+                saveData.put("bonnie-speed",nightConfiguration.getBonnieMovementSpeed());
+                saveData.put("chica-speed",nightConfiguration.getChicaMovementSpeed());
+                saveData.put("foxy-speed",nightConfiguration.getFreddyMovementSpeed());
+                saveData.put("endless-mode",nightConfiguration.isEndlessNight());
+                saveData.put("token","");
                 saveData.put("vsync",vsync);
                 saveData.put("exact-night-time",exactNightTime);
 
@@ -1738,10 +1932,15 @@ public class FNAFMain {
             this.vsync = object.getBoolean("vsync");
             this.exactNightTime = object.getBoolean("exact-night-time");
 
-            this.freddyAI = object.getInt("freddy-ai");
-            this.bonnieAI = object.getInt("bonnie-ai");
-            this.chicaAI = object.getInt("chica-ai");
-            this.foxyAI = object.getInt("foxy-ai");
+            nightConfiguration.setFreddyAI(object.getInt("freddy-ai"));
+            nightConfiguration.setBonnieAI(object.getInt("bonnie-ai"));
+            nightConfiguration.setChicaAI(object.getInt("chica-ai"));
+            nightConfiguration.setFoxyAI(object.getInt("foxy-ai"));
+            nightConfiguration.setFreddyMovementSpeed(object.getInt("freddy-speed"));
+            nightConfiguration.setBonnieMovementSpeed(object.getInt("bonnie-speed"));
+            nightConfiguration.setChicaMovementSpeed(object.getInt("chica-speed"));
+            nightConfiguration.setFoxyMovementSpeed(object.getInt("foxy-speed"));
+            nightConfiguration.setEndlessNight(object.getBoolean("endless-mode"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -1755,10 +1954,16 @@ public class FNAFMain {
                 JSONObject saveData = new JSONObject();
                 saveData.put("night",1);
                 saveData.put("volume",.5f);
-                saveData.put("freddy-ai",freddyAI);
-                saveData.put("bonnie-ai",bonnieAI);
-                saveData.put("chica-ai",chicaAI);
-                saveData.put("foxy-ai",foxyAI);
+                saveData.put("freddy-ai",nightConfiguration.getFreddyAI());
+                saveData.put("bonnie-ai",nightConfiguration.getBonnieAI());
+                saveData.put("chica-ai",nightConfiguration.getChicaAI());
+                saveData.put("foxy-ai",nightConfiguration.getFoxyAI());
+                saveData.put("freddy-speed",nightConfiguration.getFreddyMovementSpeed());
+                saveData.put("bonnie-speed",nightConfiguration.getBonnieMovementSpeed());
+                saveData.put("chica-speed",nightConfiguration.getChicaMovementSpeed());
+                saveData.put("foxy-speed",nightConfiguration.getFreddyMovementSpeed());
+                saveData.put("endless-mode",nightConfiguration.isEndlessNight());
+                saveData.put("token","");
                 saveData.put("vsync",vsync);
                 saveData.put("exact-night-time",exactNightTime);
 
@@ -1773,10 +1978,16 @@ public class FNAFMain {
                 JSONObject saveData = new JSONObject();
                 saveData.put("night",this.nightNumber);
                 saveData.put("volume",soundManager.getVolume());
-                saveData.put("freddy-ai",freddyAI);
-                saveData.put("bonnie-ai",bonnieAI);
-                saveData.put("chica-ai",chicaAI);
-                saveData.put("foxy-ai",foxyAI);
+                saveData.put("freddy-ai",nightConfiguration.getFreddyAI());
+                saveData.put("bonnie-ai",nightConfiguration.getBonnieAI());
+                saveData.put("chica-ai",nightConfiguration.getChicaAI());
+                saveData.put("foxy-ai",nightConfiguration.getFoxyAI());
+                saveData.put("freddy-speed",nightConfiguration.getFreddyMovementSpeed());
+                saveData.put("bonnie-speed",nightConfiguration.getBonnieMovementSpeed());
+                saveData.put("chica-speed",nightConfiguration.getChicaMovementSpeed());
+                saveData.put("foxy-speed",nightConfiguration.getFreddyMovementSpeed());
+                saveData.put("endless-mode",nightConfiguration.isEndlessNight());
+                saveData.put("token","");
                 saveData.put("vsync",vsync);
                 saveData.put("exact-night-time",exactNightTime);
 
@@ -1804,11 +2015,20 @@ public class FNAFMain {
     }
 
     public String formatTime(long millis) {
+        if(nightConfiguration.isEndlessNight()) return formatTimeNormal(millis);
         long hours =  TimeUnit.MILLISECONDS.toMinutes(millis) -
                 TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis));
         long minutes = TimeUnit.MILLISECONDS.toSeconds(millis) -
                 TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis));
         if(hours == 0) hours = 12;
         return String.format("%02d:%02d AM", hours, minutes);
+    }
+    public String formatTimeNormal(long millis) {
+        long hours = millis / (1000 * 60 * 60);
+        long minutes = (millis / (1000 * 60)) % 60;
+        long seconds = (millis / 1000) % 60;
+        long remainingMillis = millis % 1000;
+
+        return String.format("%02d:%02d:%02d.%d", hours, minutes, seconds, (int) (remainingMillis/100));
     }
 }
