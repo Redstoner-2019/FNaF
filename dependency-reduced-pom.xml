@@ -114,6 +114,12 @@
       </properties>
     </profile>
   </profiles>
+  <repositories>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
+  </repositories>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -125,6 +131,13 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+  <distributionManagement>
+    <repository>
+      <id>releases</id>
+      <name>ODGraphics</name>
+      <url>https://github.com/Redstoner-2019/ODGraphics/releases</url>
+    </repository>
+  </distributionManagement>
   <properties>
     <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.source>17</maven.compiler.source>

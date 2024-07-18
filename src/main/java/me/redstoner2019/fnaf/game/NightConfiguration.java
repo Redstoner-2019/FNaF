@@ -20,7 +20,7 @@ public class NightConfiguration {
     private List<Animatronic> am4Increases = new ArrayList<>();
     private List<Animatronic> am5Increases = new ArrayList<>();
     private long nightLength;
-    private boolean endlessNight;
+    private boolean endlessNight = false;
     private int nightNumber = 1;
     private float idleUsage = .0025f;
 
@@ -180,6 +180,8 @@ public class NightConfiguration {
 
     public static NightConfiguration getNight(int night){
         NightConfiguration configuration = new NightConfiguration(0,0,0,0);
+        configuration.setNightNumber(night);
+        System.out.println("Getting night " + night);
         switch (night) {
             case 1 -> {
                 configuration.setFreddyAI(0);
@@ -239,5 +241,28 @@ public class NightConfiguration {
             }
         }
         return configuration;
+    }
+
+    @Override
+    public String toString() {
+        return "NightConfiguration{" +
+                "freddyAI=" + freddyAI +
+                ", bonnieAI=" + bonnieAI +
+                ", chicaAI=" + chicaAI +
+                ", foxyAI=" + foxyAI +
+                ", freddyMovementSpeed=" + freddyMovementSpeed +
+                ", bonnieMovementSpeed=" + bonnieMovementSpeed +
+                ", chicaMovementSpeed=" + chicaMovementSpeed +
+                ", foxyMovementSpeed=" + foxyMovementSpeed +
+                ", am1Increases=" + am1Increases +
+                ", am2Increases=" + am2Increases +
+                ", am3Increases=" + am3Increases +
+                ", am4Increases=" + am4Increases +
+                ", am5Increases=" + am5Increases +
+                ", nightLength=" + nightLength +
+                ", endlessNight=" + endlessNight +
+                ", nightNumber=" + nightNumber +
+                ", idleUsage=" + idleUsage +
+                '}';
     }
 }

@@ -54,7 +54,9 @@ public class TextRenderer {
             float[] yPos = {0};
 
             for (char c : text.toCharArray()) {
-                if (c < 32 || c >= 128) continue;
+                if (c < 32 || c >= 128) {
+                    c = '?';
+                }
 
                 STBTTAlignedQuad quad = STBTTAlignedQuad.mallocStack(stack);
                 stbtt_GetBakedQuad(fontData.charData, BITMAP_W, BITMAP_H, c - 32, xPos, yPos, quad, true);
@@ -80,7 +82,9 @@ public class TextRenderer {
             float[] yPos = {0};
 
             for (char c : text.toCharArray()) {
-                if (c < 32 || c >= 128) continue;
+                if (c < 32 || c >= 128) {
+                    c = '?';
+                }
 
                 STBTTAlignedQuad quad = STBTTAlignedQuad.mallocStack(stack);
                 stbtt_GetBakedQuad(fontData.charData, BITMAP_W, BITMAP_H, c - 32, xPos, yPos, quad, true);
@@ -128,9 +132,10 @@ public class TextRenderer {
             float[] yPos = {y};
 
             for (char c : text.toCharArray()) {
+                glColor3f(r, g, b);
                 if (c < 32 || c >= 128) {
-                    System.out.println(c + " not allowed");
-                    continue;
+                    c = '?';
+                    glColor3f(1, 0, 0);
                 }
 
                 STBTTAlignedQuad quad = STBTTAlignedQuad.mallocStack(stack);

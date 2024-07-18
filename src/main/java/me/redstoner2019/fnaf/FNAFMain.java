@@ -1,9 +1,9 @@
 package me.redstoner2019.fnaf;
 
+import me.redstoner2019.client.AuthenticatorClient;
 import me.redstoner2019.fnaf.game.NightConfiguration;
 import me.redstoner2019.graphics.font.TextRenderer;
-import me.redstoner2019.graphics.general.TextureProvider;
-import me.redstoner2019.graphics.general.Util;
+import me.redstoner2019.graphics.general.*;
 import me.redstoner2019.audio.Sound;
 import me.redstoner2019.audio.SoundManager;
 import me.redstoner2019.fnaf.game.DoorState;
@@ -15,8 +15,6 @@ import me.redstoner2019.fnaf.game.animatronics.Freddy;
 import me.redstoner2019.fnaf.game.cameras.*;
 import me.redstoner2019.fnaf.game.game.GameManager;
 import me.redstoner2019.graphics.general.Renderer;
-import me.redstoner2019.graphics.general.IOUtil;
-import me.redstoner2019.graphics.general.Texture;
 import org.json.JSONObject;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -88,11 +86,18 @@ public class FNAFMain {
     private String passwordInput = "";
     private boolean textBoxUsernameSelected = true;
     private boolean textBoxPasswordSelected = false;
+    private String TOKEN = "TOKEN";
+    private AuthenticatorClient authClient = new AuthenticatorClient("localhost",8009);
+    public static boolean offlineMode = true;
+    public static boolean loggedIn = false;
+    public static String username = "";
+    public static String loginMessage = "";
 
     private NightConfiguration nightConfiguration = new NightConfiguration(freddyAI,bonnieAI,chicaAI,foxyAI);
 
     private Renderer renderer;
     private TextRenderer textRenderer;
+    private KeyboardInputHandler inputHandler = new KeyboardInputHandler();
 
     public FNAFMain() {
         fnafMain = this;
@@ -112,8 +117,29 @@ public class FNAFMain {
 
     public void run() throws IOException {
         load();
-        save();
+        authClient.setup();
         init();
+
+        if(authClient.isConnected()){
+            JSONObject o = authClient.tokeninfo(TOKEN);
+
+            if(o.getString("data").equals("token-not-found")){
+                loggedIn = false;
+            } else {
+                o = authClient.tokeninfo(TOKEN);
+                username = o.getString("username");
+                loginMessage = "logged in as " + username;
+                loggedIn = true;
+            }
+            offlineMode = false;
+        }else {
+            offlineMode = true;
+            loginMessage = "Not logged in.";
+            System.out.println("Offline mode, not connected to auth server");
+        }
+
+        save();
+
         loop();
     }
 
@@ -140,6 +166,7 @@ public class FNAFMain {
         glfwSetKeyCallback(window, new GLFWKeyCallback() {
             @Override
             public void invoke(long window, int key, int scancode, int action, int mods) {
+                inputHandler.invoke(window,key,scancode,action,mods);
                 if(menu == Menu.OFFICE){
                     if ((key == GLFW_KEY_SPACE || key == GLFW_KEY_S) && action == GLFW_RELEASE) {
                         Thread t = new Thread(new Runnable() {
@@ -406,10 +433,12 @@ public class FNAFMain {
                             menu = Menu.PRE_GAME;
                             startTime = System.currentTimeMillis();
                             nightNumber = 1;
+                            nightConfiguration.setNightNumber(nightNumber);
                             save();
                             load();
                         }
                         if(between(optionsYOffset + (optionsFontSize * 2.1f), optionsYOffset + (optionsFontSize * 2.9f),mouseY[0])){
+                            nightConfiguration.setNightNumber(nightNumber);
                             menu = Menu.PRE_GAME;
                             startTime = System.currentTimeMillis();
                             save();
@@ -419,6 +448,7 @@ public class FNAFMain {
                             menu = Menu.PRE_GAME;
                             startTime = System.currentTimeMillis();
                             nightNumber = 6;
+                            nightConfiguration.setNightNumber(6);
                         }
                         if(between(optionsYOffset + (optionsFontSize * 4.1f), optionsYOffset + (optionsFontSize * 4.9f),mouseY[0])){
                             load();
@@ -432,6 +462,7 @@ public class FNAFMain {
                             menu = Menu.PRE_GAME;
                             startTime = System.currentTimeMillis();
                             nightNumber = 8;
+                            nightConfiguration.setNightNumber(8);
                             System.out.println("Starting Venta Night");
                         }
                         if(between(optionsYOffset + (optionsFontSize * 6.1f), optionsYOffset + (optionsFontSize * 6.9f),mouseY[0])){
@@ -439,40 +470,6 @@ public class FNAFMain {
                             startTime = System.currentTimeMillis();
                         }
                     }
-
-                    /*if(mouseX[0] >= 140 && mouseX[0] <= 440) {
-                        if (mouseY[0] >= 330 - offset && mouseY[0] <= 400 - offset) {
-                            menu = Menu.PRE_GAME;
-                            startTime = System.currentTimeMillis();
-                            nightNumber = 1;
-                            save();
-                            load();
-                        } else if (mouseY[0] >= 410 - offset && mouseY[0] <= 460 - offset) {
-                            menu = Menu.PRE_GAME;
-                            startTime = System.currentTimeMillis();
-                            save();
-                            load();
-                        } else if (mouseY[0] >= 470 - offset && mouseY[0] <= 520 - offset && night6Unlocked) {
-                            menu = Menu.PRE_GAME;
-                            startTime = System.currentTimeMillis();
-                            nightNumber = 6;
-                        } else if (mouseY[0] >= 530 - offset && mouseY[0] <= 580 - offset && customNightUnlocked) {
-                            load();
-                            Freddy.getInstance().setAI_LEVEL(freddyAI);
-                            Bonnie.getInstance().setAI_LEVEL(bonnieAI);
-                            Chica.getInstance().setAI_LEVEL(chicaAI);
-                            Foxy.getInstance().setAI_LEVEL(foxyAI);
-                            menu = Menu.CUSTOM_NIGHT;
-                        } else if (mouseY[0] >= 590 - offset && mouseY[0] <= 640 - offset && ventaBlackNightUnlocked) {
-                            menu = Menu.PRE_GAME;
-                            startTime = System.currentTimeMillis();
-                            nightNumber = 8;
-                            System.out.println("Starting Venta Night");
-                        } else if (mouseY[0] >= 650 - offset && mouseY[0] <= 700 - offset) {
-                            menu = Menu.SETTINGS;
-                            startTime = System.currentTimeMillis();
-                        }
-                    }*/
                 }else if(menu == Menu.OFFICE) {
                     if(!gameManager.isPowerout()) {
                         mx-=scroll;
@@ -669,17 +666,105 @@ public class FNAFMain {
                     }
 
                     mod = height / 1080f;
-                    checkBoxX = ((-.1f+1)/2f) * width - 1.5f *fontSize;
-                    checkBoxY = ((.96f+1)/2f) * height - fontSize;
                     fontSize = 60 * mod;
 
-                    if(between(checkBoxX,checkBoxX + fontSize,mouseX[0]) && between(checkBoxY,checkBoxY + fontSize,mouseY[0])){
+                    float textBoxOffset = fontSize * 6;
+
+                    /**
+                     * TODO: implement text boxes
+                     */
+
+                    checkBoxY = fontSize * 9;
+
+                    if(between(textBoxOffset,width - fontSize,mouseX[0]) && between(checkBoxY,checkBoxY + fontSize,mouseY[0])){
                         sounds.get("blip.ogg").stop();
                         sounds.get("blip.ogg").play();
-                        nightConfiguration.setEndlessNight(!nightConfiguration.isEndlessNight());
+                        System.out.println("Username text field");
+
+                        textBoxPasswordSelected = false;
+                        textBoxUsernameSelected = true;
 
                         save();
+                    } else if(between(textBoxOffset,width - fontSize,mouseX[0]) && between(fontSize * 11,fontSize * 11 + fontSize,mouseY[0])){
+                        sounds.get("blip.ogg").stop();
+                        sounds.get("blip.ogg").play();
+                        System.out.println("Password text field");
+
+                        textBoxPasswordSelected = true;
+                        textBoxUsernameSelected = false;
+
+                        inputHandler.resetInputString();
+
+                        save();
+                    }else if(between(checkBoxX,checkBoxX + 3 * fontSize,mouseX[0]) && between(fontSize * 13,fontSize * 13 + fontSize,mouseY[0])){
+                        sounds.get("blip.ogg").stop();
+                        sounds.get("blip.ogg").play();
+                        System.out.println("Login Clicked");
+
+                        JSONObject o = authClient.loginAccount(usernameInput,passwordInput);
+                        if(o.getString("data").equals("login-success")){
+                            TOKEN = o.getString("token");
+                            o = authClient.tokeninfo(TOKEN);
+                            username = o.getString("username");
+                            loggedIn = true;
+                            save();
+                            loginMessage = "logged in as " + username;
+                        } else {
+                            loggedIn = false;
+                            if(o.getString("data").equals("incorrect-password")){
+                                loginMessage = "Incorrect Password";
+                            } else if(o.getString("data").equals("account-doesnt-exist")){
+                                loginMessage = "Account doesnt exist.";
+                            } else {
+                                loginMessage = "Not logged in.";
+                            }
+                        }
+
+                        textBoxPasswordSelected = false;
+                        textBoxUsernameSelected = false;
+
+                        inputHandler.setInputString(usernameInput);
+
+                        save();
+                    }else if(between(checkBoxX + 4 * fontSize,checkBoxX + 11 * fontSize,mouseX[0]) && between(fontSize * 13,fontSize * 13 + fontSize,mouseY[0])){
+                        sounds.get("blip.ogg").stop();
+                        sounds.get("blip.ogg").play();
+                        System.out.println("Create account Clicked");
+
+                        JSONObject o = authClient.createAccount(usernameInput,usernameInput,passwordInput);
+                        if(o.getString("data").equals("account-created")){
+                            o = authClient.loginAccount(usernameInput,passwordInput);
+                            TOKEN = o.getString("token");
+                            o = authClient.tokeninfo(TOKEN);
+                            username = o.getString("username");
+                            loggedIn = true;
+                            save();
+                            username = o.getString("username");
+                            loggedIn = true;
+                            loginMessage = "logged in as " + username;
+                        } else {
+                            loggedIn = false;
+                            if(o.getString("data").equals("account-already-exists")){
+                                loginMessage = "Account already exists.";
+                            }
+                        }
+
+                        textBoxPasswordSelected = false;
+                        textBoxUsernameSelected = false;
+
+                        inputHandler.setInputString(usernameInput);
+
+                        save();
+                    } else {
+                        System.out.println("Deselecting");
+
+                        textBoxPasswordSelected = false;
+                        textBoxUsernameSelected = false;
+
+                        inputHandler.setInputString(passwordInput);
                     }
+
+
                 } else if (menu == CUSTOM_NIGHT){
                     boolean yOnAI = between(0.15,0.3,my);
                     boolean yOnMovement = between(0.5,0.65,my);
@@ -688,8 +773,6 @@ public class FNAFMain {
                     float fontSize = 60 * mod;
                     float checkBoxX = ((-.1f+1)/2f) * width - 1.5f *fontSize;
                     float checkBoxY = ((.96f+1)/2f) * height - fontSize;
-
-                    System.out.println(mx + " " + my);
 
                     if(between(-0.15,-0.28,mx) && between(0.78f,0.9f,my)){
                         sounds.get("blip.ogg").stop();
@@ -822,6 +905,7 @@ public class FNAFMain {
                         save();
                         menu = Menu.PRE_GAME;
                         nightNumber = 7;
+                        nightConfiguration.setNightNumber(7);
                     }
 
                     if(between(-0.7,-1,mx) && between(0.7,1,my)){
@@ -1249,7 +1333,7 @@ public class FNAFMain {
                         stopAllSounds();
                         if(timeSinceStart < 3100)sounds.get("blip.ogg").play();
                         textRenderer.renderTextOld("12:00 AM",(width - textRenderer.textWidth("12:00 AM", 60)) / 2,(float) ((height-120) / 2), 60,Color.WHITE);
-                        textRenderer.renderTextOld("Night " + nightNumber,(width - textRenderer.textWidth("Night " + nightNumber, 60)) / 2,(float) ((height-120) / 2) - 60, 60,Color.WHITE);
+                        textRenderer.renderTextOld("Night " + nightConfiguration.getNightNumber(),(width - textRenderer.textWidth("Night " + nightConfiguration.getNightNumber(), 60)) / 2,(float) ((height-120) / 2) - 60, 60,Color.WHITE);
                     }
                     if(timeSinceStart > 6000) {
                         menu = Menu.OFFICE;
@@ -1258,14 +1342,25 @@ public class FNAFMain {
                         sounds.get("Ambiance1.ogg").play();
                         sounds.get("Ambiance1.ogg").setRepeating(true);
 
-                        if(nightNumber <= 6) gameManager.startNight(nightNumber);
-                        else if(nightNumber == 7) {
-                            nightConfiguration.setNightNumber(7);
-                            gameManager.startNight(nightConfiguration);
+                        if(nightConfiguration.getNightNumber() != 7){
+                            nightConfiguration.setEndlessNight(false);
                         }
-                        else if(nightNumber == 8) gameManager.startNight(nightNumber);
-                        else gameManager.startNight(new NightConfiguration(0,0,0,0));
-                        if(nightNumber > 5) nightNumber = 5;
+
+                        if(nightNumber <= 5){
+                            nightConfiguration = NightConfiguration.getNight(nightNumber);
+                        }
+
+                        if(nightNumber == 6){
+                            nightConfiguration = NightConfiguration.getNight(6);
+                        }
+
+                        if(nightNumber == 8){
+                            nightConfiguration = NightConfiguration.getNight(8);
+                        }
+
+                        System.out.println("starting " + nightConfiguration);
+
+                        gameManager.startNight(nightConfiguration);
 
                         if(gameManager.isVentaNight()) {
                             sounds.get("ventablacklong.ogg").setVolume(.75f);
@@ -1382,7 +1477,8 @@ public class FNAFMain {
                     } else {
                         currentTime = gameManager.getHour() == 0 ? "12 AM" : gameManager.getHour() + " AM";
                     }
-                    if(nightConfiguration.isEndlessNight()){
+
+                    if(gameManager.isEndless){
                         currentTime = formatTime(System.currentTimeMillis() - gameManager.getNightStart());
                     }
 
@@ -1491,7 +1587,7 @@ public class FNAFMain {
                         currentTime = gameManager.getHour() == 0 ? "12 AM" : gameManager.getHour() + " AM";
                     }
 
-                    if(nightConfiguration.isEndlessNight()){
+                    if(gameManager.isEndless){
                         currentTime = formatTime(System.currentTimeMillis() - gameManager.getNightStart());
                     }
 
@@ -1513,10 +1609,16 @@ public class FNAFMain {
                     if(nightConfiguration.isEndlessNight()){
                         String text = "You survived for " + formatTimeNormal(nightEndTime - gameManager.getNightStart());
                         float w = textRenderer.textWidth(text,60 * (height / 1080f));
-
                         w = (width - w) / 2;
 
                         textRenderer.renderText(text,w,(height-60 * (height / 1080f)) / 2,60 * (height / 1080f),Color.WHITE);
+
+                        text = "Power left: " + String.format("%.2f",gameManager.getPower());
+
+                        w = textRenderer.textWidth(text,60 * (height / 1080f));
+                        w = (width - w) / 2;
+
+                        textRenderer.renderText(text,w,(height-120 * (height / 1080f)) / 2,60 * (height / 1080f),Color.WHITE);
                     }
                     if(nightNumber > 5) nightNumber = 5;
                     break;
@@ -1657,18 +1759,33 @@ public class FNAFMain {
 
                     float textBoxOffset = 6 * checkBoxX;
 
+                    if(textBoxUsernameSelected){
+                        usernameInput = inputHandler.getInputString();
+                    }
+
+                    if(textBoxPasswordSelected){
+                        passwordInput = inputHandler.getInputString();
+                    }
+
                     renderer.renderTextureCoordinatesBounds(textBoxOffset,checkBoxY,width - checkBoxX,checkBoxY + fontSize,white,true,false,0,Color.WHITE);
                     renderer.renderTextureCoordinatesBounds(textBoxOffset + (5 * mod),checkBoxY + (5 * mod),width - checkBoxX - (5 * mod),checkBoxY + fontSize - (5 * mod),white,true,false,0,Color.BLACK);
-                    textRenderer.renderText(usernameInput,textBoxOffset + (20 * mod),checkBoxY,fontSize,Color.WHITE);
+                    textRenderer.renderText(usernameInput,textBoxOffset + (15 * mod),checkBoxY,fontSize,Color.WHITE);
                     textRenderer.renderText("Username:",checkBoxX + (20 * mod),checkBoxY,fontSize,Color.WHITE);
-
+                    float offset = textBoxOffset + (17 * mod) + textRenderer.textWidth(usernameInput,fontSize);
+                    if(textBoxUsernameSelected && ((int) (GLFW.glfwGetTime() * 1.3) % 2 == 0)) renderer.renderTextureCoordinatesBounds(offset,checkBoxY + (fontSize * 0.2f),offset + mod * 3,checkBoxY  + (fontSize * 0.8f),white,true,false,0,Color.WHITE);
 
                     checkBoxY = fontSize * 11;
 
+                    String obfuscatedPassword = "";
+
+                    for(char c : passwordInput.toCharArray()) obfuscatedPassword+="*";
+
                     renderer.renderTextureCoordinatesBounds(textBoxOffset,checkBoxY,width - checkBoxX,checkBoxY + fontSize,white,true,false,0,Color.WHITE);
                     renderer.renderTextureCoordinatesBounds(textBoxOffset + (5 * mod),checkBoxY + (5 * mod),width - checkBoxX - (5 * mod),checkBoxY + fontSize - (5 * mod),white,true,false,0,Color.BLACK);
-                    textRenderer.renderText("*******",textBoxOffset + (20 * mod),checkBoxY,fontSize,Color.WHITE);
+                    textRenderer.renderText(obfuscatedPassword,textBoxOffset + (15 * mod),checkBoxY,fontSize,Color.WHITE);
                     textRenderer.renderText("Password:",checkBoxX + (20 * mod),checkBoxY,fontSize,Color.WHITE);
+                    offset = textBoxOffset + (17 * mod) + textRenderer.textWidth(obfuscatedPassword,fontSize);
+                    if(textBoxPasswordSelected && ((int) (GLFW.glfwGetTime() * 1.3) % 2 == 0)) renderer.renderTextureCoordinatesBounds(offset,checkBoxY + (fontSize * 0.2f),offset + mod * 3,checkBoxY  + (fontSize * 0.8f),white,true,false,0,Color.WHITE);
 
                     checkBoxY = fontSize * 13;
 
@@ -1676,7 +1793,15 @@ public class FNAFMain {
                     renderer.renderTextureCoordinates(checkBoxX + (5 * mod) + (20 * mod),checkBoxY + (5 * mod),textRenderer.textWidth("Login", fontSize) + (30 * mod),fontSize - (10 * mod),white,true,false,0,Color.BLACK);
                     textRenderer.renderText("Login",checkBoxX + (40 * mod),checkBoxY,fontSize,Color.WHITE);
 
-                    textRenderer.renderText("Back", fontSize, (height - (fontSize * 2) * mod),fontSize,Color.WHITE);
+                    renderer.renderTextureCoordinates(checkBoxX + 4*fontSize,checkBoxY,textRenderer.textWidth("Create Account", fontSize) + (40 * mod),fontSize,white,true,false,0,Color.WHITE);
+                    renderer.renderTextureCoordinates(checkBoxX + (5 * mod) + 4 * fontSize,checkBoxY + (5 * mod),textRenderer.textWidth("Create Account", fontSize) + (30 * mod),fontSize - (10 * mod),white,true,false,0,Color.BLACK);
+                    textRenderer.renderText("Create Account",checkBoxX + (10 * mod) + 4 * fontSize,checkBoxY,fontSize,Color.WHITE);
+
+                    checkBoxY = fontSize * 15;
+
+                    textRenderer.renderText(loginMessage,checkBoxX,checkBoxY,fontSize,loggedIn ? Color.GREEN : Color.RED);
+
+                    textRenderer.renderText("Back", fontSize, (height - ((60 * 2) * mod)),fontSize,Color.WHITE);
                     break;
                 }
             }
@@ -1909,7 +2034,7 @@ public class FNAFMain {
                 saveData.put("chica-speed",nightConfiguration.getChicaMovementSpeed());
                 saveData.put("foxy-speed",nightConfiguration.getFreddyMovementSpeed());
                 saveData.put("endless-mode",nightConfiguration.isEndlessNight());
-                saveData.put("token","");
+                saveData.put("token",TOKEN);
                 saveData.put("vsync",vsync);
                 saveData.put("exact-night-time",exactNightTime);
 
@@ -1931,6 +2056,7 @@ public class FNAFMain {
             this.nightNumber = object.getInt("night");
             this.vsync = object.getBoolean("vsync");
             this.exactNightTime = object.getBoolean("exact-night-time");
+            this.TOKEN = object.getString("token");
 
             nightConfiguration.setFreddyAI(object.getInt("freddy-ai"));
             nightConfiguration.setBonnieAI(object.getInt("bonnie-ai"));
@@ -1963,7 +2089,7 @@ public class FNAFMain {
                 saveData.put("chica-speed",nightConfiguration.getChicaMovementSpeed());
                 saveData.put("foxy-speed",nightConfiguration.getFreddyMovementSpeed());
                 saveData.put("endless-mode",nightConfiguration.isEndlessNight());
-                saveData.put("token","");
+                saveData.put("token",TOKEN);
                 saveData.put("vsync",vsync);
                 saveData.put("exact-night-time",exactNightTime);
 
@@ -1987,7 +2113,7 @@ public class FNAFMain {
                 saveData.put("chica-speed",nightConfiguration.getChicaMovementSpeed());
                 saveData.put("foxy-speed",nightConfiguration.getFreddyMovementSpeed());
                 saveData.put("endless-mode",nightConfiguration.isEndlessNight());
-                saveData.put("token","");
+                saveData.put("token",TOKEN);
                 saveData.put("vsync",vsync);
                 saveData.put("exact-night-time",exactNightTime);
 
@@ -2015,7 +2141,7 @@ public class FNAFMain {
     }
 
     public String formatTime(long millis) {
-        if(nightConfiguration.isEndlessNight()) return formatTimeNormal(millis);
+        if(gameManager.isEndless) return formatTimeNormal(millis);
         long hours =  TimeUnit.MILLISECONDS.toMinutes(millis) -
                 TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis));
         long minutes = TimeUnit.MILLISECONDS.toSeconds(millis) -

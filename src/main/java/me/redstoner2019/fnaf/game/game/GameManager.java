@@ -44,6 +44,7 @@ public class GameManager {
     public boolean customNight = false;
     public boolean ventaNight = false;
     public int nightNumber = 0;
+    public boolean isEndless = false;
 
     private final Object CAMERA_DOWN_WAIT = new Object();
     private final Object CAMERA_UP_WAIT = new Object();
@@ -130,6 +131,8 @@ public class GameManager {
     }
 
     public void startNight(NightConfiguration nightConfiguration){
+        if(nightConfiguration.getNightNumber() != 7) nightConfiguration.setEndlessNight(false);
+        System.out.println(nightConfiguration);
         if(nightRunning) return;
         nightStart = System.currentTimeMillis();
         nightRunning = true;
@@ -139,7 +142,14 @@ public class GameManager {
         isBlackout = false;
         isPowerout = false;
         nightNumber = nightConfiguration.getNightNumber();
-        int night = nightConfiguration.getNightNumber();
+        final int[] night = {nightConfiguration.getNightNumber()};
+
+        System.out.println("Starting night " + nightConfiguration.getNightNumber());
+
+        if(nightConfiguration.getNightNumber() == 7){
+            customNight = true;
+            isEndless = nightConfiguration.isEndlessNight();
+        }
 
         Office.getInstance().setRightDoor(false);
         Office.getInstance().setLeftDoor(false);
@@ -173,16 +183,20 @@ public class GameManager {
         chicaInterval = nightConfiguration.getChicaMovementSpeed();
         foxyInterval = nightConfiguration.getFoxyMovementSpeed();
 
-        if(night == 7){
+        System.out.println(nightConfiguration);
+
+        /*if(nightConfiguration.getNightNumber() == 7){
             customNight = true;
         }
-        if(night == 8){
+        if(nightConfiguration.getNightNumber() == 8){
             ventaNight = true;
             freddyInterval = 2920;
             bonnieInterval = 3970;
             chicaInterval = 3980;
             foxyInterval = 4010;
         }
+
+        System.out.println(nightConfiguration);
 
         /*switch (night) {
             case 1 -> {
@@ -247,6 +261,7 @@ public class GameManager {
             }
         }*/
 
+        NightConfiguration finalNightConfiguration = nightConfiguration;
         Thread mainManagement = new Thread(() -> {
             GameManager gameManager = getInstance();
             Office office = Office.getInstance();
@@ -270,7 +285,7 @@ public class GameManager {
                             }
                         }
                         case 6 -> {
-                            if(nightConfiguration.isEndlessNight()) continue;
+                            if(finalNightConfiguration.isEndlessNight()) continue;
                             stopAllSounds();
                             nightRunning = false;
                             FNAFMain.fnafMain.menu = Menu.NIGHT_END;
@@ -284,13 +299,13 @@ public class GameManager {
                             nightRunning = false;
                             if(fnafMain.nightNumber < 5) fnafMain.nightNumber++;
 
-                            System.out.println("Night " + night + " completed");
+                            System.out.println("Night " + night[0] + " completed");
 
-                            if(night == 5) fnafMain.night6Unlocked = true;
-                            if(night == 6) fnafMain.customNightUnlocked = true;
-                            if(night == 7 && nightConfiguration.getBonnieAI() + nightConfiguration.getChicaAI() + nightConfiguration.getFreddyAI() + nightConfiguration.getFoxyAI() == 80) fnafMain.ventaBlackNightUnlocked = true;
-                            if(night == 8) fnafMain.ventaBlackNightCompleted = true;
-                            System.out.println("Night " + night + " completed");
+                            if(night[0] == 5) fnafMain.night6Unlocked = true;
+                            if(night[0] == 6) fnafMain.customNightUnlocked = true;
+                            if(night[0] == 7 && finalNightConfiguration.getBonnieAI() + finalNightConfiguration.getChicaAI() + finalNightConfiguration.getFreddyAI() + finalNightConfiguration.getFoxyAI() == 80) fnafMain.ventaBlackNightUnlocked = true;
+                            if(night[0] == 8) fnafMain.ventaBlackNightCompleted = true;
+                            System.out.println("Night " + night[0] + " completed");
 
                             fnafMain.save();
 
@@ -309,7 +324,7 @@ public class GameManager {
 
                             stopAllSounds();
 
-                            if(night == 5){
+                            if(night[0] == 5){
                                 fnafMain.menu = Menu.ENDING_WEEK_END;
                                 sounds.get("powerout.ogg").play();
                                 try {
@@ -319,7 +334,7 @@ public class GameManager {
                                 }
                             }
 
-                            if(night == 6){
+                            if(night[0] == 6){
                                 fnafMain.menu = Menu.ENDING_WEEK_OVERTIME;
                                 sounds.get("powerout.ogg").play();
                                 System.out.println(sounds.get("powerout.ogg").getVolume());
@@ -330,7 +345,7 @@ public class GameManager {
                                 }
                             }
 
-                            if(night == 7){
+                            if(night[0] == 7){
                                 fnafMain.menu = Menu.ENDING_FIRED;
                                 sounds.get("powerout.ogg").play();
                                 try {
@@ -340,7 +355,7 @@ public class GameManager {
                                 }
                             }
 
-                            if(night == 8){
+                            if(night[0] == 8){
                                 fnafMain.menu = Menu.ENDING_FIRED;
                                 sounds.get("powerout.ogg").play();
                                 sounds.get("powerout.ogg").setVolume(.6f);
@@ -386,7 +401,7 @@ public class GameManager {
                             stopAllSounds();
                             sounds.get("powerout.ogg").setVolume(1);
 
-                            if(customNight || ventaNight || night == 5 || night == 6){
+                            if(customNight || ventaNight || night[0] == 5 || night[0] == 6){
                                 fnafMain.menu = Menu.MAIN_MENU;
                                 sounds.get("Static2.ogg").play();
                                 sounds.get("Mainmenu1.ogg").play();
@@ -536,9 +551,7 @@ public class GameManager {
 
                     float reg = minReg + ((maxReg - minReg) * difficulty);
 
-                    System.out.println(reg);
-
-                    if(usage == 0 && nightConfiguration.isEndlessNight()){
+                    if(usage == 0 && isEndless){
                         power = Math.min(power + (reg * deltaTime * idleUsage), 100);
                     } else {
                         power -= ((idleUsage + usage) * deltaTime);
