@@ -1362,7 +1362,7 @@ public class FNAFMain {
 
                         gameManager.startNight(nightConfiguration);
 
-                        if(gameManager.isVentaNight()) {
+                        if(nightConfiguration.getNightLength() == 8) {
                             sounds.get("ventablacklong.ogg").setVolume(.75f);
                             sounds.get("ventablacklong.ogg").play();
                         }
