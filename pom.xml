@@ -161,6 +161,12 @@
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>com.github.Redstoner-2019</groupId>
+            <artifactId>AuthenticationServer</artifactId>
+            <version>v1.1.0</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.json/json -->
         <dependency>
             <groupId>org.json</groupId>

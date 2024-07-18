@@ -1318,7 +1318,7 @@ public class FNAFMain {
                         case 5 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (7 * optionsFontSize),optionsFontSize, Color.WHITE);
                     }
 
-                    textRenderer.renderTextOld("v1.2.0", 10 * (height / 1080f), (height-20 * (height / 1080f)),20 * (height / 1080f), Color.WHITE);
+                    textRenderer.renderTextOld("v1.3.0-alpha", 10 * (height / 1080f), (height-20 * (height / 1080f)),20 * (height / 1080f), Color.WHITE);
 
                     renderer.renderTexture(.15f,.75f,.1f,.1f * ((float) width / height),textures.get(night6Unlocked ? "star.png" : "star.empty.png"),false,false,0);
                     renderer.renderTexture(.35f,.75f,.1f,.1f * ((float) width / height),textures.get(customNightUnlocked ? "star.png" : "star.empty.png"),false,false,0);
