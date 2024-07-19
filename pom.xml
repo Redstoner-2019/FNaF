@@ -6,7 +6,7 @@
 
     <groupId>me.redstoner2019</groupId>
     <artifactId>LWJGL</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.3.0-alpha.1</version>
 
     <build>
         <plugins>
@@ -62,16 +62,9 @@
         <repository>
             <id>releases</id>
             <name>FNaF</name>
-            <url>https://github.com/Redstoner-2019/ODGraphics/releases</url>
+            <url>https://maven.pkg.github.com/Redstoner-2019/FNaF</url>
         </repository>
     </distributionManagement>
-
-    <repositories>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
 
     <profiles>
         <profile>
@@ -162,9 +155,19 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.github.Redstoner-2019</groupId>
-            <artifactId>AuthenticationServer</artifactId>
-            <version>v1.1.0</version>
+            <groupId>me.redstoner2019</groupId>
+            <artifactId>authenticationserver</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>statisticsserver</groupId>
+            <artifactId>me.redstoner2019</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>utilities</groupId>
+            <artifactId>me.redstoner2019</artifactId>
+            <version>1.0.1</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.json/json -->

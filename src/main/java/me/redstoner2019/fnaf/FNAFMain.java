@@ -699,25 +699,44 @@ public class FNAFMain {
                     }else if(between(checkBoxX,checkBoxX + 3 * fontSize,mouseX[0]) && between(fontSize * 13,fontSize * 13 + fontSize,mouseY[0])){
                         sounds.get("blip.ogg").stop();
                         sounds.get("blip.ogg").play();
-                        System.out.println("Login Clicked");
 
-                        JSONObject o = authClient.loginAccount(usernameInput,passwordInput);
-                        if(o.getString("data").equals("login-success")){
-                            TOKEN = o.getString("token");
-                            o = authClient.tokeninfo(TOKEN);
-                            username = o.getString("username");
-                            loggedIn = true;
-                            save();
-                            loginMessage = "logged in as " + username;
-                        } else {
-                            loggedIn = false;
-                            if(o.getString("data").equals("incorrect-password")){
-                                loginMessage = "Incorrect Password";
-                            } else if(o.getString("data").equals("account-doesnt-exist")){
-                                loginMessage = "Account doesnt exist.";
+                        try{
+                            if(authClient.isConnected()){
+                                JSONObject o = authClient.loginAccount(usernameInput,passwordInput);
+                                if(o.getString("data").equals("login-success")){
+                                    TOKEN = o.getString("token");
+                                    o = authClient.tokeninfo(TOKEN);
+                                    username = o.getString("username");
+                                    loggedIn = true;
+                                    save();
+                                    loginMessage = "logged in as " + username;
+                                } else {
+                                    loggedIn = false;
+                                    if(o.getString("data").equals("incorrect-password")){
+                                        loginMessage = "Incorrect Password";
+                                    } else if(o.getString("data").equals("account-doesnt-exist")){
+                                        loginMessage = "Account doesnt exist.";
+                                    } else {
+                                        loginMessage = "Not logged in.";
+                                    }
+                                }
                             } else {
-                                loginMessage = "Not logged in.";
+                                authClient.setup();
+                                if(authClient.isConnected()){
+                                    loginMessage = "Reconnection successful, please try again.";
+                                } else {
+                                    loginMessage = "Not connected to Auth server";
+                                }
+                                loggedIn = false;
                             }
+                        } catch (Exception e){
+                            authClient.setup();
+                            if(authClient.isConnected()){
+                                loginMessage = "Reconnection successful, please try again.";
+                            } else {
+                                loginMessage = "Not connected to Auth server";
+                            }
+                            loggedIn = false;
                         }
 
                         textBoxPasswordSelected = false;
@@ -731,22 +750,42 @@ public class FNAFMain {
                         sounds.get("blip.ogg").play();
                         System.out.println("Create account Clicked");
 
-                        JSONObject o = authClient.createAccount(usernameInput,usernameInput,passwordInput);
-                        if(o.getString("data").equals("account-created")){
-                            o = authClient.loginAccount(usernameInput,passwordInput);
-                            TOKEN = o.getString("token");
-                            o = authClient.tokeninfo(TOKEN);
-                            username = o.getString("username");
-                            loggedIn = true;
-                            save();
-                            username = o.getString("username");
-                            loggedIn = true;
-                            loginMessage = "logged in as " + username;
-                        } else {
-                            loggedIn = false;
-                            if(o.getString("data").equals("account-already-exists")){
-                                loginMessage = "Account already exists.";
+                        try{
+                            if(authClient.isConnected()){
+                                JSONObject o = authClient.createAccount(usernameInput,usernameInput,passwordInput);
+                                if(o.getString("data").equals("account-created")){
+                                    o = authClient.loginAccount(usernameInput,passwordInput);
+                                    TOKEN = o.getString("token");
+                                    o = authClient.tokeninfo(TOKEN);
+                                    username = o.getString("username");
+                                    loggedIn = true;
+                                    save();
+                                    username = o.getString("username");
+                                    loggedIn = true;
+                                    loginMessage = "logged in as " + username;
+                                } else {
+                                    loggedIn = false;
+                                    if(o.getString("data").equals("account-already-exists")){
+                                        loginMessage = "Account already exists.";
+                                    }
+                                }
+                            } else {
+                                authClient.setup();
+                                if(authClient.isConnected()){
+                                    loginMessage = "Reconnection successful, please try again.";
+                                } else {
+                                    loginMessage = "Not connected to Auth server";
+                                }
+                                loggedIn = false;
                             }
+                        }catch (Exception e){
+                            authClient.setup();
+                            if(authClient.isConnected()){
+                                loginMessage = "Reconnection successful, please try again.";
+                            } else {
+                                loginMessage = "Not connected to Auth server";
+                            }
+                            loggedIn = false;
                         }
 
                         textBoxPasswordSelected = false;
