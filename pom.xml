@@ -155,6 +155,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>utilities</groupId>
+            <artifactId>me.redstoner2019</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+        <dependency>
             <groupId>me.redstoner2019</groupId>
             <artifactId>authenticationserver</artifactId>
             <version>1.0.1</version>

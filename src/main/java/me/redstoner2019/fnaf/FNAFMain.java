@@ -1,5 +1,6 @@
 package me.redstoner2019.fnaf;
 
+import me.redstoner2019.Utilities;
 import me.redstoner2019.client.AuthenticatorClient;
 import me.redstoner2019.fnaf.game.NightConfiguration;
 import me.redstoner2019.graphics.font.TextRenderer;
@@ -82,22 +83,20 @@ public class FNAFMain {
     private int chicaAI = 0;
     private int foxyAI = 8;
 
-    private String usernameInput = "Redstoner-2019";
-    private String passwordInput = "";
-    private boolean textBoxUsernameSelected = true;
-    private boolean textBoxPasswordSelected = false;
     private String TOKEN = "TOKEN";
     private AuthenticatorClient authClient = new AuthenticatorClient("localhost",8009);
     public static boolean offlineMode = true;
     public static boolean loggedIn = false;
     public static String username = "";
-    public static String loginMessage = "";
+    public static String displayName = "";
 
     private NightConfiguration nightConfiguration = new NightConfiguration(freddyAI,bonnieAI,chicaAI,foxyAI);
 
     private Renderer renderer;
     private TextRenderer textRenderer;
     private KeyboardInputHandler inputHandler = new KeyboardInputHandler();
+
+    private String version = "v1.3.0";
 
     public FNAFMain() {
         fnafMain = this;
@@ -115,26 +114,41 @@ public class FNAFMain {
         this.jumpscare = jumpscare;
     }
 
-    public void run() throws IOException {
+    public void run(String[] args) throws IOException {
         load();
+        authClient.setAddress(Utilities.getIPData().getString("auth-server"));
+        authClient.setPort(Utilities.getIPData().getInt("auth-server-port"));
         authClient.setup();
+
+        if(args.length > 0) TOKEN = args[0];
+
+        loggedIn = false;
+
         init();
+
+        System.out.println("Login");
+
+        System.out.println(TOKEN);
 
         if(authClient.isConnected()){
             JSONObject o = authClient.tokeninfo(TOKEN);
 
+            System.out.println("Auth client Connected");
+
             if(o.getString("data").equals("token-not-found")){
                 loggedIn = false;
+                System.out.println("Token not found");
             } else {
                 o = authClient.tokeninfo(TOKEN);
                 username = o.getString("username");
-                loginMessage = "logged in as " + username;
+                displayName = o.getString("displayname");
+                System.out.println("Logged in as " + username);
                 loggedIn = true;
             }
             offlineMode = false;
         }else {
             offlineMode = true;
-            loginMessage = "Not logged in.";
+            loggedIn = false;
             System.out.println("Offline mode, not connected to auth server");
         }
 
@@ -664,146 +678,6 @@ public class FNAFMain {
 
                         save();
                     }
-
-                    mod = height / 1080f;
-                    fontSize = 60 * mod;
-
-                    float textBoxOffset = fontSize * 6;
-
-                    /**
-                     * TODO: implement text boxes
-                     */
-
-                    checkBoxY = fontSize * 9;
-
-                    if(between(textBoxOffset,width - fontSize,mouseX[0]) && between(checkBoxY,checkBoxY + fontSize,mouseY[0])){
-                        sounds.get("blip.ogg").stop();
-                        sounds.get("blip.ogg").play();
-                        System.out.println("Username text field");
-
-                        textBoxPasswordSelected = false;
-                        textBoxUsernameSelected = true;
-
-                        save();
-                    } else if(between(textBoxOffset,width - fontSize,mouseX[0]) && between(fontSize * 11,fontSize * 11 + fontSize,mouseY[0])){
-                        sounds.get("blip.ogg").stop();
-                        sounds.get("blip.ogg").play();
-                        System.out.println("Password text field");
-
-                        textBoxPasswordSelected = true;
-                        textBoxUsernameSelected = false;
-
-                        inputHandler.resetInputString();
-
-                        save();
-                    }else if(between(checkBoxX,checkBoxX + 3 * fontSize,mouseX[0]) && between(fontSize * 13,fontSize * 13 + fontSize,mouseY[0])){
-                        sounds.get("blip.ogg").stop();
-                        sounds.get("blip.ogg").play();
-
-                        try{
-                            if(authClient.isConnected()){
-                                JSONObject o = authClient.loginAccount(usernameInput,passwordInput);
-                                if(o.getString("data").equals("login-success")){
-                                    TOKEN = o.getString("token");
-                                    o = authClient.tokeninfo(TOKEN);
-                                    username = o.getString("username");
-                                    loggedIn = true;
-                                    save();
-                                    loginMessage = "logged in as " + username;
-                                } else {
-                                    loggedIn = false;
-                                    if(o.getString("data").equals("incorrect-password")){
-                                        loginMessage = "Incorrect Password";
-                                    } else if(o.getString("data").equals("account-doesnt-exist")){
-                                        loginMessage = "Account doesnt exist.";
-                                    } else {
-                                        loginMessage = "Not logged in.";
-                                    }
-                                }
-                            } else {
-                                authClient.setup();
-                                if(authClient.isConnected()){
-                                    loginMessage = "Reconnection successful, please try again.";
-                                } else {
-                                    loginMessage = "Not connected to Auth server";
-                                }
-                                loggedIn = false;
-                            }
-                        } catch (Exception e){
-                            authClient.setup();
-                            if(authClient.isConnected()){
-                                loginMessage = "Reconnection successful, please try again.";
-                            } else {
-                                loginMessage = "Not connected to Auth server";
-                            }
-                            loggedIn = false;
-                        }
-
-                        textBoxPasswordSelected = false;
-                        textBoxUsernameSelected = false;
-
-                        inputHandler.setInputString(usernameInput);
-
-                        save();
-                    }else if(between(checkBoxX + 4 * fontSize,checkBoxX + 11 * fontSize,mouseX[0]) && between(fontSize * 13,fontSize * 13 + fontSize,mouseY[0])){
-                        sounds.get("blip.ogg").stop();
-                        sounds.get("blip.ogg").play();
-                        System.out.println("Create account Clicked");
-
-                        try{
-                            if(authClient.isConnected()){
-                                JSONObject o = authClient.createAccount(usernameInput,usernameInput,passwordInput);
-                                if(o.getString("data").equals("account-created")){
-                                    o = authClient.loginAccount(usernameInput,passwordInput);
-                                    TOKEN = o.getString("token");
-                                    o = authClient.tokeninfo(TOKEN);
-                                    username = o.getString("username");
-                                    loggedIn = true;
-                                    save();
-                                    username = o.getString("username");
-                                    loggedIn = true;
-                                    loginMessage = "logged in as " + username;
-                                } else {
-                                    loggedIn = false;
-                                    if(o.getString("data").equals("account-already-exists")){
-                                        loginMessage = "Account already exists.";
-                                    }
-                                }
-                            } else {
-                                authClient.setup();
-                                if(authClient.isConnected()){
-                                    loginMessage = "Reconnection successful, please try again.";
-                                } else {
-                                    loginMessage = "Not connected to Auth server";
-                                }
-                                loggedIn = false;
-                            }
-                        }catch (Exception e){
-                            authClient.setup();
-                            if(authClient.isConnected()){
-                                loginMessage = "Reconnection successful, please try again.";
-                            } else {
-                                loginMessage = "Not connected to Auth server";
-                            }
-                            loggedIn = false;
-                        }
-
-                        textBoxPasswordSelected = false;
-                        textBoxUsernameSelected = false;
-
-                        inputHandler.setInputString(usernameInput);
-
-                        save();
-                    } else {
-                        System.out.println("Deselecting");
-
-                        textBoxPasswordSelected = false;
-                        textBoxUsernameSelected = false;
-
-                        inputHandler.setInputString(passwordInput);
-                    }
-
-
                 } else if (menu == CUSTOM_NIGHT){
                     boolean yOnAI = between(0.15,0.3,my);
                     boolean yOnMovement = between(0.5,0.65,my);
@@ -1357,7 +1231,9 @@ public class FNAFMain {
                         case 5 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (7 * optionsFontSize),optionsFontSize, Color.WHITE);
                     }
 
-                    textRenderer.renderTextOld("v1.3.0-alpha", 10 * (height / 1080f), (height-20 * (height / 1080f)),20 * (height / 1080f), Color.WHITE);
+                    if(loggedIn) textRenderer.renderTextOld("Online - " + username + " (" + displayName + ")", 10 * (height / 1080f), (height-60 * (height / 1080f)),30 * (height / 1080f), Color.GREEN);
+                    else textRenderer.renderTextOld("Offline", 10 * (height / 1080f), (height-60 * (height / 1080f)),30 * (height / 1080f), Color.RED);
+                    textRenderer.renderTextOld(version, 10 * (height / 1080f), (height-20 * (height / 1080f)),30 * (height / 1080f), Color.WHITE);
 
                     renderer.renderTexture(.15f,.75f,.1f,.1f * ((float) width / height),textures.get(night6Unlocked ? "star.png" : "star.empty.png"),false,false,0);
                     renderer.renderTexture(.35f,.75f,.1f,.1f * ((float) width / height),textures.get(customNightUnlocked ? "star.png" : "star.empty.png"),false,false,0);
@@ -1793,53 +1669,6 @@ public class FNAFMain {
                     if(exactNightTime) renderer.renderTextureCoordinatesBounds(checkBoxX + ((fontSize - (mod * selectedSize)) / 2),checkBoxY + ((fontSize - (mod * selectedSize)) / 2),checkBoxX + ((fontSize + (mod * selectedSize)) / 2),checkBoxY + ((fontSize + (mod * selectedSize)) / 2),white,true,false,0, Color.WHITE);
                     textRenderer.renderText("Exact Nighttime  (Display Nighttime as 12:04AM instead of 12AM)",checkBoxX * 2.5f, checkBoxY,fontSize,Color.WHITE);
 
-
-                    checkBoxY = fontSize * 9;
-
-                    float textBoxOffset = 6 * checkBoxX;
-
-                    if(textBoxUsernameSelected){
-                        usernameInput = inputHandler.getInputString();
-                    }
-
-                    if(textBoxPasswordSelected){
-                        passwordInput = inputHandler.getInputString();
-                    }
-
-                    renderer.renderTextureCoordinatesBounds(textBoxOffset,checkBoxY,width - checkBoxX,checkBoxY + fontSize,white,true,false,0,Color.WHITE);
-                    renderer.renderTextureCoordinatesBounds(textBoxOffset + (5 * mod),checkBoxY + (5 * mod),width - checkBoxX - (5 * mod),checkBoxY + fontSize - (5 * mod),white,true,false,0,Color.BLACK);
-                    textRenderer.renderText(usernameInput,textBoxOffset + (15 * mod),checkBoxY,fontSize,Color.WHITE);
-                    textRenderer.renderText("Username:",checkBoxX + (20 * mod),checkBoxY,fontSize,Color.WHITE);
-                    float offset = textBoxOffset + (17 * mod) + textRenderer.textWidth(usernameInput,fontSize);
-                    if(textBoxUsernameSelected && ((int) (GLFW.glfwGetTime() * 1.3) % 2 == 0)) renderer.renderTextureCoordinatesBounds(offset,checkBoxY + (fontSize * 0.2f),offset + mod * 3,checkBoxY  + (fontSize * 0.8f),white,true,false,0,Color.WHITE);
-
-                    checkBoxY = fontSize * 11;
-
-                    String obfuscatedPassword = "";
-
-                    for(char c : passwordInput.toCharArray()) obfuscatedPassword+="*";
-
-                    renderer.renderTextureCoordinatesBounds(textBoxOffset,checkBoxY,width - checkBoxX,checkBoxY + fontSize,white,true,false,0,Color.WHITE);
-                    renderer.renderTextureCoordinatesBounds(textBoxOffset + (5 * mod),checkBoxY + (5 * mod),width - checkBoxX - (5 * mod),checkBoxY + fontSize - (5 * mod),white,true,false,0,Color.BLACK);
-                    textRenderer.renderText(obfuscatedPassword,textBoxOffset + (15 * mod),checkBoxY,fontSize,Color.WHITE);
-                    textRenderer.renderText("Password:",checkBoxX + (20 * mod),checkBoxY,fontSize,Color.WHITE);
-                    offset = textBoxOffset + (17 * mod) + textRenderer.textWidth(obfuscatedPassword,fontSize);
-                    if(textBoxPasswordSelected && ((int) (GLFW.glfwGetTime() * 1.3) % 2 == 0)) renderer.renderTextureCoordinatesBounds(offset,checkBoxY + (fontSize * 0.2f),offset + mod * 3,checkBoxY  + (fontSize * 0.8f),white,true,false,0,Color.WHITE);
-
-                    checkBoxY = fontSize * 13;
-
-                    renderer.renderTextureCoordinates(checkBoxX + (20 * mod),checkBoxY,textRenderer.textWidth("Login", fontSize) + (40 * mod),fontSize,white,true,false,0,Color.WHITE);
-                    renderer.renderTextureCoordinates(checkBoxX + (5 * mod) + (20 * mod),checkBoxY + (5 * mod),textRenderer.textWidth("Login", fontSize) + (30 * mod),fontSize - (10 * mod),white,true,false,0,Color.BLACK);
-                    textRenderer.renderText("Login",checkBoxX + (40 * mod),checkBoxY,fontSize,Color.WHITE);
-
-                    renderer.renderTextureCoordinates(checkBoxX + 4*fontSize,checkBoxY,textRenderer.textWidth("Create Account", fontSize) + (40 * mod),fontSize,white,true,false,0,Color.WHITE);
-                    renderer.renderTextureCoordinates(checkBoxX + (5 * mod) + 4 * fontSize,checkBoxY + (5 * mod),textRenderer.textWidth("Create Account", fontSize) + (30 * mod),fontSize - (10 * mod),white,true,false,0,Color.BLACK);
-                    textRenderer.renderText("Create Account",checkBoxX + (10 * mod) + 4 * fontSize,checkBoxY,fontSize,Color.WHITE);
-
-                    checkBoxY = fontSize * 15;
-
-                    textRenderer.renderText(loginMessage,checkBoxX,checkBoxY,fontSize,loggedIn ? Color.GREEN : Color.RED);
-
                     textRenderer.renderText("Back", fontSize, (height - ((60 * 2) * mod)),fontSize,Color.WHITE);
                     break;
                 }
@@ -1902,8 +1731,8 @@ public class FNAFMain {
     public static void main(String[] args) throws IOException {
         boolean enableLogging = true;
 
-        if(args.length == 1){
-            enableLogging = Boolean.valueOf(args[0]);
+        if(args.length == 2){
+            enableLogging = Boolean.valueOf(args[1]);
         }
 
         File f = new File("crash-report.txt");
@@ -1915,7 +1744,7 @@ public class FNAFMain {
         }
 
         try {
-            new FNAFMain().run();
+            new FNAFMain().run(args);
         } catch (Exception e) {
             System.out.println("\n\n\n\n");
             System.out.println("--- Crash ---");
@@ -2073,7 +1902,6 @@ public class FNAFMain {
                 saveData.put("chica-speed",nightConfiguration.getChicaMovementSpeed());
                 saveData.put("foxy-speed",nightConfiguration.getFreddyMovementSpeed());
                 saveData.put("endless-mode",nightConfiguration.isEndlessNight());
-                saveData.put("token",TOKEN);
                 saveData.put("vsync",vsync);
                 saveData.put("exact-night-time",exactNightTime);
 
@@ -2095,7 +1923,6 @@ public class FNAFMain {
             this.nightNumber = object.getInt("night");
             this.vsync = object.getBoolean("vsync");
             this.exactNightTime = object.getBoolean("exact-night-time");
-            this.TOKEN = object.getString("token");
 
             nightConfiguration.setFreddyAI(object.getInt("freddy-ai"));
             nightConfiguration.setBonnieAI(object.getInt("bonnie-ai"));
@@ -2128,7 +1955,6 @@ public class FNAFMain {
                 saveData.put("chica-speed",nightConfiguration.getChicaMovementSpeed());
                 saveData.put("foxy-speed",nightConfiguration.getFreddyMovementSpeed());
                 saveData.put("endless-mode",nightConfiguration.isEndlessNight());
-                saveData.put("token",TOKEN);
                 saveData.put("vsync",vsync);
                 saveData.put("exact-night-time",exactNightTime);
 
@@ -2152,7 +1978,6 @@ public class FNAFMain {
                 saveData.put("chica-speed",nightConfiguration.getChicaMovementSpeed());
                 saveData.put("foxy-speed",nightConfiguration.getFreddyMovementSpeed());
                 saveData.put("endless-mode",nightConfiguration.isEndlessNight());
-                saveData.put("token",TOKEN);
                 saveData.put("vsync",vsync);
                 saveData.put("exact-night-time",exactNightTime);
 
