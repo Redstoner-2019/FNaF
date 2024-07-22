@@ -1,0 +1,2 @@
+- Time lasted
+- Power Left

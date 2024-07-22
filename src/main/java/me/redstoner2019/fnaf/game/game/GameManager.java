@@ -185,6 +185,14 @@ public class GameManager {
 
         System.out.println(nightConfiguration);
 
+        if(nightNumber == 8) {
+            sounds.get("ventablacklong.ogg").setVolume(.75f);
+            sounds.get("ventablacklong.ogg").play();
+        }
+
+        idleUsage = nightConfiguration.getIdleUsage();
+
+
         /*if(nightConfiguration.getNightNumber() == 7){
             customNight = true;
         }
@@ -784,8 +792,8 @@ public class GameManager {
                         if(Office.getInstance().getLeftDoorState() == DoorState.CLOSED){
                             sounds.get("FoxyKnock.ogg").play();
                             if(ventaNight){
-                                if(foxy.getPowerDrain() == 2) foxy.setPowerDrain(4);
-                                if(foxy.getPowerDrain() == 1) foxy.setPowerDrain(2);
+                                if(foxy.getPowerDrain() == 2) foxy.setPowerDrain(7);
+                                if(foxy.getPowerDrain() == 1) foxy.setPowerDrain(3);
                                 if(foxy.getPowerDrain() == 0) foxy.setPowerDrain(1);
                             } else {
                                 if(foxy.getPowerDrain() == 6) foxy.setPowerDrain(11);

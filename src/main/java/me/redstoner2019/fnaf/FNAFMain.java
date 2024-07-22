@@ -483,6 +483,9 @@ public class FNAFMain {
                             menu = Menu.SETTINGS;
                             startTime = System.currentTimeMillis();
                         }
+                        if(between(optionsYOffset + (optionsFontSize * 7.1f), optionsYOffset + (optionsFontSize * 7.9f),mouseY[0])){
+                            menu = Menu.ONLINE;
+                        }
                     }
                 }else if(menu == Menu.OFFICE) {
                     if(!gameManager.isPowerout()) {
@@ -1069,6 +1072,9 @@ public class FNAFMain {
                             if(between(optionsYOffset + (optionsFontSize * 6.1f), optionsYOffset + (optionsFontSize * 6.9f),mouseY[0])){
                                 selection = 5;
                             }
+                            if(between(optionsYOffset + (optionsFontSize * 7.1f), optionsYOffset + (optionsFontSize * 7.9f),mouseY[0])){
+                                selection = 6;
+                            }
                         }
 
                         if(menuSelection != selection){
@@ -1221,6 +1227,7 @@ public class FNAFMain {
                     textRenderer.renderTextOld(customNightUnlocked ?  "Custom Night" : obfuscateText("Custom Night"), 140 * (width / 1920f), optionsYOffset + (5 * optionsFontSize),optionsFontSize,  customNightUnlocked ? Color.WHITE : Color.GRAY);
                     textRenderer.renderTextOld(ventaBlackNightUnlocked ?  "Venta Black Night" : obfuscateText("Venta Black Night"), 140 * (width / 1920f), optionsYOffset + (6 * optionsFontSize),optionsFontSize, ventaBlackNightUnlocked ? Color.WHITE : Color.GRAY);
                     textRenderer.renderTextOld("Settings", 140 * (width / 1920f), optionsYOffset + (7 * optionsFontSize),optionsFontSize, Color.WHITE);
+                    textRenderer.renderTextOld("Online", 140 * (width / 1920f), optionsYOffset + (8 * optionsFontSize),optionsFontSize, loggedIn ? Color.WHITE : Color.GRAY);
 
                     switch (menuSelection) {
                         case 0 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (2 * optionsFontSize),optionsFontSize, Color.WHITE);
@@ -1229,6 +1236,7 @@ public class FNAFMain {
                         case 3 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (5 * optionsFontSize),optionsFontSize, Color.WHITE);
                         case 4 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (6 * optionsFontSize),optionsFontSize, Color.WHITE);
                         case 5 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (7 * optionsFontSize),optionsFontSize, Color.WHITE);
+                        case 6 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (8 * optionsFontSize),optionsFontSize, loggedIn ? Color.WHITE : Color.GRAY);
                     }
 
                     if(loggedIn) textRenderer.renderTextOld("Online - " + username + " (" + displayName + ")", 10 * (height / 1080f), (height-60 * (height / 1080f)),30 * (height / 1080f), Color.GREEN);
@@ -1276,12 +1284,6 @@ public class FNAFMain {
                         System.out.println("starting " + nightConfiguration);
 
                         gameManager.startNight(nightConfiguration);
-
-                        if(nightConfiguration.getNightLength() == 8) {
-                            sounds.get("ventablacklong.ogg").setVolume(.75f);
-                            sounds.get("ventablacklong.ogg").play();
-                        }
-
                         load();
                     }
                     break;
@@ -1668,6 +1670,18 @@ public class FNAFMain {
                     renderer.renderTextureCoordinatesBounds(checkBoxX + (mod * 5),checkBoxY + (mod * 5),checkBoxX + fontSize - (mod * 5),checkBoxY + fontSize - (mod * 5),white,true,false,0, Color.BLACK);
                     if(exactNightTime) renderer.renderTextureCoordinatesBounds(checkBoxX + ((fontSize - (mod * selectedSize)) / 2),checkBoxY + ((fontSize - (mod * selectedSize)) / 2),checkBoxX + ((fontSize + (mod * selectedSize)) / 2),checkBoxY + ((fontSize + (mod * selectedSize)) / 2),white,true,false,0, Color.WHITE);
                     textRenderer.renderText("Exact Nighttime  (Display Nighttime as 12:04AM instead of 12AM)",checkBoxX * 2.5f, checkBoxY,fontSize,Color.WHITE);
+
+                    textRenderer.renderText("Back", fontSize, (height - ((60 * 2) * mod)),fontSize,Color.WHITE);
+                    break;
+                }
+                case ONLINE : {
+                    float mod = height / 1080f;
+                    float fontSize = 60 * mod;
+
+                    textRenderer.renderText("Online",(width-textRenderer.textWidth("Settings",80 * mod)) / 2, 0,80 * mod,Color.WHITE);
+
+                    textRenderer.renderText("1v1",100 * mod, fontSize * 3,fontSize,Color.WHITE);
+                    textRenderer.renderText("Leaderboard run",100 * mod, fontSize * 4,fontSize,Color.WHITE);
 
                     textRenderer.renderText("Back", fontSize, (height - ((60 * 2) * mod)),fontSize,Color.WHITE);
                     break;

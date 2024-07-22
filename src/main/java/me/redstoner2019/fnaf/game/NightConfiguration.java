@@ -225,7 +225,7 @@ public class NightConfiguration {
                 configuration.setChicaAI(20);
                 configuration.setFoxyAI(20);
 
-                configuration.setIdleUsage(configuration.getIdleUsage()/2.4f);
+                configuration.setIdleUsage(configuration.getIdleUsage()/2.0f);
                 configuration.setNightLength(648000);
 
                 configuration.setFreddyMovementSpeed(2920);
