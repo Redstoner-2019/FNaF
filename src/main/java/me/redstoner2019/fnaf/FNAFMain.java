@@ -96,7 +96,7 @@ public class FNAFMain {
     private TextRenderer textRenderer;
     private KeyboardInputHandler inputHandler = new KeyboardInputHandler();
 
-    private String version = "v1.3.0";
+    private String version = "v1.3.0-alpha.2";
 
     public FNAFMain() {
         fnafMain = this;
@@ -647,6 +647,31 @@ public class FNAFMain {
                     if(between(x,x + 0.075f,mx) && between(y,y + 0.075f,my)){
                         if(!gameManager.getCamera().equals(Camera7.getInstance())) cameraRandomness2 = random.nextInt(101);
                         gameManager.setCamera(Camera7.getInstance());
+                    }
+                } else if(menu == Menu.ONLINE) {
+                    float mod = height / 1080f;
+                    float modX = width / 1920f;
+                    float fontSize = 40 * mod;
+
+                    int index = (int) (mouseY[0] / fontSize) + 1;
+
+                    if(between(0,800 * modX,mouseX[0])){
+                        switch (index) {
+                            case 4 -> System.out.println("Create 1v1");
+                            case 5 -> System.out.println("Join 1v1");
+                            case 9 -> System.out.println("Night 6 run");
+                            case 10 -> System.out.println("Night 7, 4/20");
+                            case 11 -> System.out.println("Ventablack");
+                            case 13 -> System.out.println("Night 7, 4/20 endless");
+                            case 14 -> System.out.println("Ventablack endless");
+                        }
+                    }
+
+                    if(between(-0.8,-1,mx) && between(0.8,1,my)){
+                        sounds.get("blip.ogg").stop();
+                        sounds.get("blip.ogg").play();
+                        menu = Menu.MAIN_MENU;
+                        save();
                     }
                 } else if(menu == Menu.SETTINGS) {
                     float mod = height / 1080f;
@@ -1676,14 +1701,36 @@ public class FNAFMain {
                 }
                 case ONLINE : {
                     float mod = height / 1080f;
-                    float fontSize = 60 * mod;
+                    float modX = width / 1920f;
+                    float fontSize = 40 * mod;
 
                     textRenderer.renderText("Online",(width-textRenderer.textWidth("Settings",80 * mod)) / 2, 0,80 * mod,Color.WHITE);
 
-                    textRenderer.renderText("1v1",100 * mod, fontSize * 3,fontSize,Color.WHITE);
-                    textRenderer.renderText("Leaderboard run",100 * mod, fontSize * 4,fontSize,Color.WHITE);
+                    textRenderer.renderText("Multiplayer:",100 * mod, fontSize * 2,fontSize,Color.WHITE);
+                    textRenderer.renderText("Create 1v1",100 * mod, fontSize * 4,fontSize,Color.WHITE);
+                    textRenderer.renderText("Join 1v1",100 * mod, fontSize * 5,fontSize,Color.WHITE);
+                    textRenderer.renderText("Challenges:",100 * mod, fontSize * 7,fontSize,Color.WHITE);
+                    textRenderer.renderText("Challenge: Night 6 run",100 * mod, fontSize * 9,fontSize,Color.WHITE);
+                    textRenderer.renderText("Challenge: Night 7, 4/20 run",100 * mod, fontSize * 10,fontSize,Color.WHITE);
+                    textRenderer.renderText("Challenge: Ventablack run",100 * mod, fontSize * 11,fontSize,Color.WHITE);
+                    textRenderer.renderText("Challenge: Night 7, 4/20 endless run",100 * mod, fontSize * 13,fontSize,Color.WHITE);
+                    textRenderer.renderText("Challenge: Ventablack endless run",100 * mod, fontSize * 14,fontSize,Color.WHITE);
 
-                    textRenderer.renderText("Back", fontSize, (height - ((60 * 2) * mod)),fontSize,Color.WHITE);
+                    int index = (int) (mouseY[0] / fontSize);
+
+                    if(between(0,800 * modX,mouseX[0])){
+                        switch (index) {
+                            case 4 -> textRenderer.renderText(">>",50 * mod, fontSize * 4,fontSize,Color.WHITE);
+                            case 5 -> textRenderer.renderText(">>",50 * mod, fontSize * 5,fontSize,Color.WHITE);
+                            case 9 -> textRenderer.renderText(">>",50 * mod, fontSize * 9,fontSize,Color.WHITE);
+                            case 10 -> textRenderer.renderText(">>",50 * mod, fontSize * 10,fontSize,Color.WHITE);
+                            case 11 -> textRenderer.renderText(">>",50 * mod, fontSize * 11,fontSize,Color.WHITE);
+                            case 13 -> textRenderer.renderText(">>",50 * mod, fontSize * 13,fontSize,Color.WHITE);
+                            case 14 -> textRenderer.renderText(">>",50 * mod, fontSize * 14,fontSize,Color.WHITE);
+                        }
+                    }
+
+                    textRenderer.renderText("Back", 0.5f * (60 * mod), (height - (1.5f * (60 * mod))),60 * mod,Color.WHITE);
                     break;
                 }
             }
