@@ -7,7 +7,7 @@ uniform sampler2D textureSampler;
 
 uniform vec2 texOffset;
 uniform vec2 texScale;
-uniform vec3 color = vec3(1,1,1);
+uniform vec4 color = vec4(1,1,1,1);
 uniform float noiseLevel = .5;
 uniform float seed = 0;
 
@@ -30,7 +30,7 @@ void main() {
 
     vec4 textureColor = texture(textureSampler, textureCoord);
 
-    vec4 recoloredColor = textureColor * vec4(color,1);
+    vec4 recoloredColor = textureColor * color;
 
     int pixelsX = 200;
     int pixelsY = 200;

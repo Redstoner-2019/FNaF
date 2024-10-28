@@ -78,6 +78,7 @@ public class Chica extends Animatronic{
                     }
                     case 1: {
                         moveTo(OfficeCamera.getInstance());
+                        Office.getInstance().setRightLight(false);
                         break;
                     }
                 }

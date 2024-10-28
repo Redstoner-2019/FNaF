@@ -114,6 +114,12 @@
       </properties>
     </profile>
   </profiles>
+  <repositories>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com</url>
+    </repository>
+  </repositories>
   <dependencyManagement>
     <dependencies>
       <dependency>

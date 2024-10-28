@@ -52,7 +52,10 @@ public class Bonnie extends Animatronic{
             }
             case "Camera2B" : {
                 switch (Distribution.distribution(1,1)) {
-                    case 0 -> moveTo(OfficeCamera.getInstance());
+                    case 0 -> {
+                        moveTo(OfficeCamera.getInstance());
+                        Office.getInstance().setLeftLight(false);
+                    }
                     case 1 -> moveTo(Camera3.getInstance());
                 }
                 break;

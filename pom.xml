@@ -172,12 +172,6 @@
             <artifactId>authenticationserver</artifactId>
             <version>1.0.1</version>
         </dependency>
-        <dependency>
-            <groupId>statisticsserver</groupId>
-            <artifactId>me.redstoner2019</artifactId>
-            <version>1.0.1</version>
-        </dependency>
-
 
         <!-- https://mvnrepository.com/artifact/org.json/json -->
         <dependency>

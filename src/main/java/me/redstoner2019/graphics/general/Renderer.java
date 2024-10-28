@@ -104,7 +104,7 @@ public class Renderer {
         GL20.glUniform2f(offsetScaleLocation, w, h);
 
         int colorLocation = GL20.glGetUniformLocation(renderShader.id, "color");
-        GL20.glUniform3f(colorLocation, color.getRed()/255f, color.getGreen()/255f, color.getBlue()/255f);
+        GL20.glUniform4f(colorLocation, color.getRed()/255f, color.getGreen()/255f, color.getBlue()/255f, color.getAlpha()/255f);
 
         int seedLocation = GL20.glGetUniformLocation(renderShader.id, "seed");
         GL20.glUniform1f(seedLocation, new Random().nextFloat());

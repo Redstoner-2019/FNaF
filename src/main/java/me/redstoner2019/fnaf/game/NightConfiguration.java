@@ -1,6 +1,7 @@
 package me.redstoner2019.fnaf.game;
 
 import me.redstoner2019.fnaf.game.animatronics.Animatronic;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,34 @@ public class NightConfiguration {
     private boolean endlessNight = false;
     private int nightNumber = 1;
     private float idleUsage = .0025f;
+    private String challenge = null;
+
+    public void reset(){
+        freddyMovementSpeed = 3820;
+        bonnieMovementSpeed = 4970;
+        chicaMovementSpeed = 4980;
+        foxyMovementSpeed = 5010;
+        idleUsage = .0025f;
+        challenge = null;
+        endlessNight = false;
+        nightLength = 6 * 60000;
+    }
+
+    public NightConfiguration(JSONObject json){
+        this.freddyAI = json.getInt("freddyAI");
+        this.bonnieAI = json.getInt("bonnieAI");
+        this.chicaAI = json.getInt("chicaAI");
+        this.foxyAI = json.getInt("foxyAI");
+        this.freddyMovementSpeed = json.getInt("freddyMovementSpeed");
+        this.bonnieMovementSpeed = json.getInt("bonnieMovementSpeed");
+        this.chicaMovementSpeed = json.getInt("chicaMovementSpeed");
+        this.foxyMovementSpeed = json.getInt("foxyMovementSpeed");
+        this.idleUsage = json.getInt("idleUsage");
+        this.challenge = json.getString("challenge");
+        this.endlessNight = json.getBoolean("endlessNight");
+        this.nightNumber = json.getInt("nightNumber");
+        this.nightLength = json.getLong("nightLength");
+    }
 
     public NightConfiguration(int freddyAI, int bonnieAI, int chicaAI, int foxyAI) {
         this.freddyAI = freddyAI;
@@ -40,6 +69,14 @@ public class NightConfiguration {
         this.bonnieMovementSpeed = bonnieMovementSpeed;
         this.chicaMovementSpeed = chicaMovementSpeed;
         this.foxyMovementSpeed = foxyMovementSpeed;
+    }
+
+    public String getChallenge() {
+        return challenge;
+    }
+
+    public void setChallenge(String challenge) {
+        this.challenge = challenge;
     }
 
     public int getNightNumber() {
@@ -178,10 +215,31 @@ public class NightConfiguration {
         this.idleUsage = idleUsage;
     }
 
+    public JSONObject convertToJSON(){
+        JSONObject json = new JSONObject();
+        json.put("freddyAI", freddyAI);
+        json.put("bonnieAI", bonnieAI);
+        json.put("chicaAI", chicaAI);
+        json.put("foxyAI", foxyAI);
+        json.put("freddyMovementSpeed", freddyMovementSpeed);
+        json.put("bonnieMovementSpeed", bonnieMovementSpeed);
+        json.put("chicaMovementSpeed", chicaMovementSpeed);
+        json.put("foxyMovementSpeed", foxyMovementSpeed);
+        json.put("idleUsage", idleUsage);
+        json.put("nightLength", nightLength);
+        json.put("endlessNight", endlessNight);
+        json.put("nightNumber", nightNumber);
+        json.put("challenge",challenge);
+        return json;
+    }
+
     public static NightConfiguration getNight(int night){
         NightConfiguration configuration = new NightConfiguration(0,0,0,0);
+        configuration.setEndlessNight(false);
         configuration.setNightNumber(night);
+        configuration.setNightLength(6*60000);
         System.out.println("Getting night " + night);
+        System.out.println();
         switch (night) {
             case 1 -> {
                 configuration.setFreddyAI(0);
@@ -225,7 +283,7 @@ public class NightConfiguration {
                 configuration.setChicaAI(20);
                 configuration.setFoxyAI(20);
 
-                configuration.setIdleUsage(configuration.getIdleUsage()/2.0f);
+                configuration.setIdleUsage(configuration.getIdleUsage()/1.78f);
                 configuration.setNightLength(648000);
 
                 configuration.setFreddyMovementSpeed(2920);
