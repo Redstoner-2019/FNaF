@@ -187,8 +187,12 @@ public class TextRenderer {
         fontDataMap.put(fontSize, new FontData(textureID, charData));
     }
 
-    private float toNegativeRange(float f){
+    public float toNegativeRange(float f){
         return (f * 2) - 1;
+    }
+
+    public float fromNegativeRange(float f){
+        return (f + 1) / 2;
     }
 
     private static class FontData {

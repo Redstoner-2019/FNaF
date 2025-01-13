@@ -102,7 +102,7 @@ public class FNAFMain {
     private TextRenderer textRenderer;
     private KeyboardInputHandler inputHandler = new KeyboardInputHandler();
 
-    public String version = "v1.3.1";
+    public String version = "v1.3.2";
     public int versionNumber = 1;
 
     public FNAFMain() {
@@ -159,10 +159,6 @@ public class FNAFMain {
         if(client.isConnected()){
             JSONObject request = new JSONObject();
             request.put("token",TOKEN);
-            System.out.println("Request: " + request.toString(3));
-            request = new JSONObject("{\n" +
-                    "\t\"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsdWthcyIsImV4cCI6MTczNzA1NjQ4NiwiaWF0IjoxNzM2Nzk3Mjg2LCJzZWNyZXQiOiJpSG9hd2NicmNIam9WQmQ5WVljcEFBPT0ifQ.cxsj_qypLYXp5IN_sX9QrQvXRCHeEzF80Ex5SVGEkrw\"\n" +
-                    "}");
             JSONObject o = Requests.request("http://158.220.105.209:8080/verifyToken",request);
 
             System.out.println("Auth client Connected");
@@ -1001,7 +997,33 @@ public class FNAFMain {
 
         System.out.println("Loading loading screen texture...");
         loadingTexture = Texture.loadTextureFromResource("textures/jump.jpg");
+        textures.put("white.png",Texture.loadTextureFromResource("textures/white.png"));
         System.out.println();
+    }
+
+    public void startupLoading(int count, int max, String message){
+        float progress = (float) max / count;
+        float width = 1.46f * progress;
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        renderer.renderTexture(-1,-1,2,2,loadingTexture,true,false,0);
+        renderer.renderTextureBounds(-0.75f,-0.6f,0.75f,-0.7f,textures.get("white.png"),true,false,0);
+        renderer.renderTextureBounds(-0.74f,-0.61f,0.74f,-0.69f,textures.get("white.png"),true,false,0,Color.BLACK);
+        renderer.renderTextureBounds(-0.73f,-0.62f,-0.73f + width,-0.68f,textures.get("white.png"),true,false,0);
+
+        //message = "This is a Loading message";
+
+        message = count + " / " + max + " loaded " + message;
+
+        float textWidth = textRenderer.textWidth(message,20) / renderer.getWidth();
+
+        float xOff = (0.72f - textWidth) / 2;
+
+        textRenderer.renderText(message, ((textRenderer.fromNegativeRange(-0.75f) + xOff) * renderer.getWidth()) ,textRenderer.fromNegativeRange(0.72f) * renderer.getHeight() ,20, Color.WHITE);
+
+        GLFW.glfwSwapBuffers(window);
+        GLFW.glfwPollEvents();
     }
 
     private void loop() {
@@ -1057,10 +1079,17 @@ public class FNAFMain {
             JSONObject texture = data.getJSONObject("textures");
             JSONObject audios = data.getJSONObject("audio");
 
+            int loadCounter = 0;
+            int totalToLoad = texture.keySet().size() + audios.keySet().size();
+
             for(String s : texture.keySet()){
                 System.out.println("Loading buffered texture: " + s);
                 textures.put(s,Texture.loadTextureFromResource(texture.getString(s)));
                 System.out.println();
+
+                loadCounter++;
+
+                startupLoading(totalToLoad,loadCounter, s);
             }
 
             System.out.println("Loading sounds.");
@@ -1070,6 +1099,10 @@ public class FNAFMain {
             for(String s : audios.keySet()){
                 Sound so = new Sound(audios.getString(s),false);
                 sounds.put(s,so);
+
+                loadCounter++;
+
+                startupLoading(totalToLoad,loadCounter, s);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
