@@ -18,6 +18,7 @@ import me.redstoner2019.fnaf.game.animatronics.Freddy;
 import me.redstoner2019.fnaf.game.cameras.*;
 import me.redstoner2019.fnaf.game.game.GameManager;
 import me.redstoner2019.graphics.general.Renderer;
+import me.redstoner2019.util.http.Requests;
 import org.json.JSONObject;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -88,7 +89,6 @@ public class FNAFMain {
     private int foxyAI = 8;
 
     private String TOKEN = "TOKEN";
-    public AuthenticatorClient authClient = new AuthenticatorClient("localhost",8009);
     public StatisticClient client;
     public static boolean offlineMode = true;
     public static boolean loggedIn = false;
@@ -102,7 +102,7 @@ public class FNAFMain {
     private TextRenderer textRenderer;
     private KeyboardInputHandler inputHandler = new KeyboardInputHandler();
 
-    public String version = "v1.3.0";
+    public String version = "v1.3.1";
     public int versionNumber = 1;
 
     public FNAFMain() {
@@ -123,13 +123,12 @@ public class FNAFMain {
 
     public void run(String[] args) throws IOException {
         load();
-        authClient.setAddress(Utilities.getIPData().getString("auth-server"));
-        authClient.setPort(Utilities.getIPData().getInt("auth-server-port"));
-        authClient.setup();
 
         //TODO Change back to default
         client = new StatisticClient(Utilities.getIPData().getString("statistics-server"),Utilities.getIPData().getInt("statistics-server-port"));
         //client = new StatisticClient("localhost",Utilities.getIPData().getInt("statistics-server-port"));
+
+        System.out.println("Stat client " + client.isConnected());
 
         if(new File("waitingToSend.json").exists() && client.isConnected()){
             System.out.println("Reading to send");
@@ -146,26 +145,33 @@ public class FNAFMain {
             }
         }
 
+        System.out.println("Stat client " + client.isConnected());
+
         if(args.length > 0) TOKEN = args[0];
 
         loggedIn = false;
 
         init();
 
-        System.out.println("Auth Server Connection: " + authClient.isConnected());
         System.out.println("Stat Server Connection: " + client.isConnected());
         System.out.println();
 
-        if(authClient.isConnected() && client.isConnected()){
-            JSONObject o = authClient.tokeninfo(TOKEN);
+        if(client.isConnected()){
+            JSONObject request = new JSONObject();
+            request.put("token",TOKEN);
+            System.out.println("Request: " + request.toString(3));
+            request = new JSONObject("{\n" +
+                    "\t\"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsdWthcyIsImV4cCI6MTczNzA1NjQ4NiwiaWF0IjoxNzM2Nzk3Mjg2LCJzZWNyZXQiOiJpSG9hd2NicmNIam9WQmQ5WVljcEFBPT0ifQ.cxsj_qypLYXp5IN_sX9QrQvXRCHeEzF80Ex5SVGEkrw\"\n" +
+                    "}");
+            JSONObject o = Requests.request("http://158.220.105.209:8080/verifyToken",request);
 
             System.out.println("Auth client Connected");
 
-            if(o.getString("data").equals("token-not-found")){
+            if(o.getInt("status") != 0){
                 loggedIn = false;
                 System.out.println("Token not found");
             } else {
-                o = authClient.tokeninfo(TOKEN);
+                o = Requests.request("http://158.220.105.209:8080/tokenInfo",request);
                 username = o.getString("username");
                 displayName = o.getString("displayname");
                 System.out.println("Logged in as " + username);
@@ -1091,7 +1097,7 @@ public class FNAFMain {
         while (!GLFW.glfwWindowShouldClose(window)) {
             double start = glfwGetTime();
 
-            if(!authClient.isConnected() || !client.isConnected()) {
+            if(!client.isConnected()) {
                 loggedIn = false;
             }
 

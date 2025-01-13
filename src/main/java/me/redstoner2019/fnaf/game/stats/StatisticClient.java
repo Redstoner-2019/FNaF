@@ -26,18 +26,19 @@ public class StatisticClient {
             @Override
             public void run() {
                 try{
+                    try {
+                        System.out.println("Connecting to " + ip + ":" + port);
+                        socket = new Socket(ip,port);
+                        oos = new ObjectOutputStream(socket.getOutputStream());
+                        ois = new ObjectInputStream(socket.getInputStream());
+                        isConnected = true;
+                    } catch (IOException e) {
+                        System.err.println("Connection failed to " + ip + ":" + port);
+                    }
+
                     Thread pinger = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            try {
-                                System.out.println("Connecting to " + ip + ":" + port);
-                                socket = new Socket(ip,port);
-                                oos = new ObjectOutputStream(socket.getOutputStream());
-                                ois = new ObjectInputStream(socket.getInputStream());
-                                isConnected = true;
-                            } catch (IOException e) {
-                                System.err.println("Connection failed to " + ip + ":" + port);
-                            }
                             while (isConnected) {
                                 try {
                                     Thread.sleep(2000);
