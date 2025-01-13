@@ -1,6 +1,7 @@
 package me.redstoner2019.fnaf.game.animatronics;
 
 import me.redstoner2019.fnaf.FNAFMain;
+import me.redstoner2019.fnaf.Menu;
 import me.redstoner2019.fnaf.game.Distribution;
 import me.redstoner2019.fnaf.game.Office;
 import me.redstoner2019.fnaf.game.cameras.*;
@@ -64,12 +65,22 @@ public class Bonnie extends Animatronic{
     }
 
     public void moveTo(Camera c){
-        if(getCurrentCamera().equals(FNAFMain.fnafMain.gameManager.getCamera())) FNAFMain.fnafMain.glitchStrength = 1;
+        if(getCurrentCamera().equals(FNAFMain.fnafMain.gameManager.getCamera()) && FNAFMain.fnafMain.menu == Menu.CAMERAS) {
+            FNAFMain.fnafMain.glitchStrength = 2;
+            FNAFMain.sounds.get("camera_garble.ogg").stop();
+            FNAFMain.sounds.get("camera_garble.ogg").setCursor(0);
+            FNAFMain.sounds.get("camera_garble.ogg").play();
+        }
         System.out.print("Bonnie: Moving from " + getCurrentCamera().getCameraName());
         if(c instanceof OfficeCamera) Office.getInstance().setLeftDoorAnimatronic(this);
         setCurrentCamera(c);
         System.out.println(" to " + getCurrentCamera().getCameraName());
-        if(getCurrentCamera().equals(FNAFMain.fnafMain.gameManager.getCamera())) FNAFMain.fnafMain.glitchStrength = 1;
+        if(getCurrentCamera().equals(FNAFMain.fnafMain.gameManager.getCamera()) && FNAFMain.fnafMain.menu == Menu.CAMERAS) {
+            FNAFMain.fnafMain.glitchStrength = 2;
+            FNAFMain.sounds.get("camera_garble.ogg").stop();
+            FNAFMain.sounds.get("camera_garble.ogg").setCursor(0);
+            FNAFMain.sounds.get("camera_garble.ogg").play();
+        }
     }
 
     public static Bonnie getInstance() {

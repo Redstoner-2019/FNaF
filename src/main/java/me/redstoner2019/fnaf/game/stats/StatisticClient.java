@@ -34,11 +34,10 @@ public class StatisticClient {
                                 socket = new Socket(ip,port);
                                 oos = new ObjectOutputStream(socket.getOutputStream());
                                 ois = new ObjectInputStream(socket.getInputStream());
+                                isConnected = true;
                             } catch (IOException e) {
                                 System.err.println("Connection failed to " + ip + ":" + port);
-                                throw new RuntimeException(e);
                             }
-                            isConnected = true;
                             while (isConnected) {
                                 try {
                                     Thread.sleep(2000);

@@ -456,8 +456,16 @@ public class GameManager {
                         if(isPowerout || !nightRunning){
                             continue;
                         }
-                        sounds.get("FoxyRun.ogg").setVolume(0.5f);
-                        sounds.get("FoxyRun.ogg").play();
+
+                        if(camera.equals(Camera2A.getInstance())){
+                            sounds.get("FoxyRun.ogg").setVolume(10.0f);
+                            sounds.get("FoxyRun.ogg").play();
+                        } else {
+                            sounds.get("FoxyRun.ogg").stop();
+                        }
+
+
+
                         for (int i = 0; i < 30; i++) {
                             foxy.setRun_animation_image(i);
                             Thread.sleep(32);
@@ -496,6 +504,31 @@ public class GameManager {
                 }
             }
             System.out.println("Foxy Ended");
+        });
+
+        Thread randomEvents = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (nightRunning) {
+                    try {
+                        Thread.sleep(50);
+                        if(isPowerout) break;
+                        if(random.nextInt(600) == 50){
+                            System.out.println("SWIRL");
+                            if(!sounds.get("swirl_ambience.ogg").isPlaying()) sounds.get("swirl_ambience.ogg").play();
+                        }
+                        if(random.nextInt(1200) == 50){
+                            System.out.println("FOXY DADADUM");
+                            if(!sounds.get("pirate_song.ogg").isPlaying()) {
+                                sounds.get("pirate_song.ogg").setVolume(.35f);
+                                sounds.get("pirate_song.ogg").play();
+                            }
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         });
 
         Thread mainManagement = new Thread(() -> {
@@ -811,7 +844,7 @@ public class GameManager {
                             }
                         }
                     });
-                    if(freddy.getCurrentCamera().equals(Camera4B.getInstance()) && isCameraUp && !office.isRightDoor()) {
+                    if(freddy.getCurrentCamera().equals(Camera4B.getInstance()) && isCameraUp && !office.isRightDoor() && !camera.equals(Camera4B.getInstance())) {
                         freddyOfficeEnter.start();
                     }
                     if(!nightRunning) freddyOfficeEnter.interrupt();
@@ -917,6 +950,7 @@ public class GameManager {
         });
 
         mainManagement.start();
+        randomEvents.start();
         freddyThread.start();
         bonnieThread.start();
         chicaThread.start();

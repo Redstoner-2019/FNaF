@@ -4,6 +4,7 @@ import me.redstoner2019.fnaf.FNAFMain;
 import me.redstoner2019.fnaf.Menu;
 import me.redstoner2019.fnaf.game.Office;
 import me.redstoner2019.fnaf.game.cameras.*;
+import me.redstoner2019.fnaf.game.game.GameManager;
 
 import java.util.Random;
 
@@ -61,21 +62,23 @@ public class Freddy extends Animatronic{
             }
             case "Camera4B" : {
                 if(!Office.getInstance().isRightDoor() && FNAFMain.fnafMain.menu == Menu.CAMERAS){
-                    Thread t = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            while (FNAFMain.fnafMain.menu == Menu.CAMERAS){
-                                System.out.println("Waiting...");
-                                try {
-                                    Thread.sleep(100);
-                                } catch (InterruptedException e) {
-                                    throw new RuntimeException(e);
+                    if(!GameManager.getInstance().getCamera().equals(Camera4B.getInstance())){
+                        Thread t = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                while (FNAFMain.fnafMain.menu == Menu.CAMERAS){
+                                    System.out.println("Waiting...");
+                                    try {
+                                        Thread.sleep(100);
+                                    } catch (InterruptedException e) {
+                                        throw new RuntimeException(e);
+                                    }
                                 }
+                                FNAFMain.fnafMain.triggerJumpScare("freddy.jump.",27,true);
                             }
-                            FNAFMain.fnafMain.triggerJumpScare("freddy.jump.",27,true);
-                        }
-                    });
-                    t.start();
+                        });
+                        t.start();
+                    }
                 } else {
                     failedAttacks++;
                     if(failedAttacks >= 5){
@@ -88,11 +91,21 @@ public class Freddy extends Animatronic{
     }
 
     public void moveTo(Camera c){
-        if(getCurrentCamera().equals(FNAFMain.fnafMain.gameManager.getCamera())) FNAFMain.fnafMain.glitchStrength = 1;
+        if(getCurrentCamera().equals(FNAFMain.fnafMain.gameManager.getCamera()) && FNAFMain.fnafMain.menu == Menu.CAMERAS) {
+            FNAFMain.fnafMain.glitchStrength = 2;
+            FNAFMain.sounds.get("camera_garble.ogg").stop();
+            FNAFMain.sounds.get("camera_garble.ogg").setCursor(0);
+            FNAFMain.sounds.get("camera_garble.ogg").play();
+        }
         System.out.print("Freddy: Moving from " + getCurrentCamera().getCameraName());
         setCurrentCamera(c);
         System.out.println(" to " + getCurrentCamera().getCameraName());
-        if(getCurrentCamera().equals(FNAFMain.fnafMain.gameManager.getCamera())) FNAFMain.fnafMain.glitchStrength = 1;
+        if(getCurrentCamera().equals(FNAFMain.fnafMain.gameManager.getCamera()) && FNAFMain.fnafMain.menu == Menu.CAMERAS) {
+            FNAFMain.fnafMain.glitchStrength = 2;
+            FNAFMain.sounds.get("camera_garble.ogg").stop();
+            FNAFMain.sounds.get("camera_garble.ogg").setCursor(0);
+            FNAFMain.sounds.get("camera_garble.ogg").play();
+        }
         int laugh = new Random().nextInt(1,4);
         FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").stop();
         switch (getCurrentCamera().getCameraName()) {

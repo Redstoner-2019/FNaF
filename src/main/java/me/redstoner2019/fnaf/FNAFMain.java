@@ -102,7 +102,7 @@ public class FNAFMain {
     private TextRenderer textRenderer;
     private KeyboardInputHandler inputHandler = new KeyboardInputHandler();
 
-    public String version = "v1.3.0-alpha.5";
+    public String version = "v1.3.0";
     public int versionNumber = 1;
 
     public FNAFMain() {
@@ -152,6 +152,10 @@ public class FNAFMain {
 
         init();
 
+        System.out.println("Auth Server Connection: " + authClient.isConnected());
+        System.out.println("Stat Server Connection: " + client.isConnected());
+        System.out.println();
+
         if(authClient.isConnected() && client.isConnected()){
             JSONObject o = authClient.tokeninfo(TOKEN);
 
@@ -175,9 +179,6 @@ public class FNAFMain {
         }
 
         save();
-
-        loggedIn = false;
-
         loop();
     }
 
@@ -1399,6 +1400,8 @@ public class FNAFMain {
                         sounds.get("fan.oga").setRepeating(true);
                         sounds.get("Ambiance1.ogg").play();
                         sounds.get("Ambiance1.ogg").setRepeating(true);
+                        sounds.get("Ambience2.ogg").play();
+                        sounds.get("Ambience2.ogg").setRepeating(true);
 
                         /*if(nightConfiguration.getNightNumber() != 7){
                             nightConfiguration.setEndlessNight(false);
@@ -1555,10 +1558,10 @@ public class FNAFMain {
                         renderer.renderTexture(-1,-1,2,2,textures.get("white.png"),true,true,.3f,new Color(0,0,0,255));
                         System.out.println(System.currentTimeMillis() + " / " + cameraBlackout);
                     } else {
-                        if(!gameManager.getCamera().equals(Camera6.getInstance())) renderer.renderTexture(-1.25f + (cameraScroll * 0.25f),-1,2.5f,2,textures.get(gameManager.getCamera().getImage(cameraRandomness,cameraRandomness2)),true,true,glitchStrength);
+                        if(!gameManager.getCamera().equals(Camera6.getInstance())) renderer.renderTexture(-1.25f + (cameraScroll * 0.25f),-1,2.5f,2,textures.get(gameManager.getCamera().getImage(cameraRandomness,cameraRandomness2)),true,true,glitchStrength > 1 ? 1 : glitchStrength);
                         else {
                             renderer.renderTexture(-1f, -1f, 2f, 2f, textures.get(gameManager.getCamera().getImage(cameraRandomness, cameraRandomness2)), true, true, 1f);
-                            renderer.renderTexture(-.5f, -.25f, 1f, .5f, textures.get(gameManager.getCamera().getImage(cameraRandomness, cameraRandomness2)), true, false, glitchStrength);
+                            renderer.renderTexture(-.5f, -.25f, 1f, .5f, textures.get(gameManager.getCamera().getImage(cameraRandomness, cameraRandomness2)), true, false, glitchStrength > 1 ? 1 : glitchStrength);
                         }
                         if(System.currentTimeMillis() - cameraBlackout < 1000){
                             float a = (System.currentTimeMillis() - cameraBlackout) / 1000f;
