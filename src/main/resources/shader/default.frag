@@ -40,7 +40,7 @@ void main() {
     vec2 pixelSeed3 = vec2(floor(textureCoord.x * pixelsX) + seed,floor(textureCoord.y * pixelsY) + seed);
     vec2 pixelSeed4 = vec2(floor(textureCoord.x * pixelsX) + seed,floor(textureCoord.y * pixelsY) + seed);
 
-    vec4 randomColor = vec4(random(pixelSeed1),random(pixelSeed2),random(pixelSeed3),random(pixelSeed4));
+    vec4 randomColor = vec4(random(pixelSeed1),random(pixelSeed2),random(pixelSeed3),random(pixelSeed4)) * lerp(vec4(1), color, 0.4);
 
     fragColor = lerp(recoloredColor,randomColor,noiseLevel);
 }

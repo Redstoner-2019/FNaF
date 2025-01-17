@@ -77,6 +77,7 @@ public class FNAFMain {
     private boolean exactNightTime = false;
     private long nightEndTime = 0;
     public List<Notification> notifications = new ArrayList<>();
+    private String mainmenuSong = "Mainmenu1.ogg";
 
     public boolean night6Unlocked = false;
     public boolean customNightUnlocked = false;
@@ -102,7 +103,7 @@ public class FNAFMain {
     private TextRenderer textRenderer;
     private KeyboardInputHandler inputHandler = new KeyboardInputHandler();
 
-    public String version = "v1.3.2";
+    public String version = "v1.4.0";
     public int versionNumber = 1;
 
     public FNAFMain() {
@@ -1108,9 +1109,14 @@ public class FNAFMain {
             throw new RuntimeException(e);
         }
 
+        if(ventaBlackNightUnlocked) {
+            mainmenuSong = "mainmenuEerie.ogg";
+            sounds.get(mainmenuSong).setVolume(2);
+        }
+
         sounds.get("Static2.ogg").play();
-        sounds.get("Mainmenu1.ogg").play();
-        sounds.get("Mainmenu1.ogg").setRepeating(true);
+        sounds.get(mainmenuSong).play();
+        sounds.get(mainmenuSong).setRepeating(true);
 
         Thread cameraRandomizer = new Thread(new Runnable() {
             @Override
@@ -1134,7 +1140,9 @@ public class FNAFMain {
                 loggedIn = false;
             }
 
-            //sounds.get("Mainmenu1.ogg").setAngle((float) start*10);
+            if(ventaBlackNightUnlocked) {
+                mainmenuSong = "mainmenuEerie.ogg";
+            }
 
             glitchStrength-=0.005f*deltaTime;
             if(glitchStrength < defaultGlitchStrength) glitchStrength = defaultGlitchStrength;
@@ -1367,21 +1375,24 @@ public class FNAFMain {
                         }
                     }
 
+                    Color c = Color.WHITE;
+                    if(ventaBlackNightUnlocked) c = Color.RED;
+
                     switch (mainMenuFreddyTwitchStage) {
                         case 0: {
-                            renderer.renderTexture(-1, -1, 2, 2, textures.get("freddy.twitch.1.png"), true, true, menuNoise);
+                            renderer.renderTexture(-1, -1, 2, 2, textures.get("freddy.twitch.1.png"), true, true, menuNoise,c);
                             break;
                         }
                         case 1: {
-                            renderer.renderTexture(-1, -1, 2, 2, textures.get("freddy.twitch.2.png"), true, true, menuNoise);
+                            renderer.renderTexture(-1, -1, 2, 2, textures.get("freddy.twitch.2.png"), true, true, menuNoise,c);
                             break;
                         }
                         case 2: {
-                            renderer.renderTexture(-1, -1, 2, 2, textures.get("freddy.twitch.3.png"), true, true, menuNoise);
+                            renderer.renderTexture(-1, -1, 2, 2, textures.get("freddy.twitch.3.png"), true, true, menuNoise,c);
                             break;
                         }
                         case 3: {
-                            renderer.renderTexture(-1, -1, 2, 2, textures.get("freddy.twitch.4.png"), true, true, menuNoise);
+                            renderer.renderTexture(-1, -1, 2, 2, textures.get("freddy.twitch.4.png"), true, true, menuNoise,c);
                             break;
                         }
                     }
@@ -1390,38 +1401,38 @@ public class FNAFMain {
                     float optionsYOffset = 6 * titleFontSize;
                     float optionsFontSize = 60 * (height / 1080.0f);
 
-                    textRenderer.renderTextOld("Five", 140 * (width / 1920f), 2 * titleFontSize,titleFontSize, Color.WHITE);
-                    textRenderer.renderTextOld("Nights", 140 * (width / 1920f), 3 * titleFontSize,titleFontSize, Color.WHITE);
-                    textRenderer.renderTextOld("at", 140 * (width / 1920f), 4 * titleFontSize,titleFontSize, Color.WHITE);
-                    textRenderer.renderTextOld("Freddy's", 140 * (width / 1920f), 5 * titleFontSize,titleFontSize, Color.WHITE);
+                    textRenderer.renderTextOld("Five", 140 * (width / 1920f), 2 * titleFontSize,titleFontSize, c);
+                    textRenderer.renderTextOld("Nights", 140 * (width / 1920f), 3 * titleFontSize,titleFontSize, c);
+                    textRenderer.renderTextOld("at", 140 * (width / 1920f), 4 * titleFontSize,titleFontSize, c);
+                    textRenderer.renderTextOld("Freddy's", 140 * (width / 1920f), 5 * titleFontSize,titleFontSize, c);
 
-                    textRenderer.renderTextOld("New Game", 140 * (width / 1920f), optionsYOffset + (2 * optionsFontSize),optionsFontSize, Color.WHITE);
-                    textRenderer.renderTextOld("Continue", 140 * (width / 1920f), optionsYOffset + (3 * optionsFontSize),optionsFontSize, Color.WHITE);
-                    textRenderer.renderTextOld(" -> Night " + nightNumber, 350 * (width / 1920f), optionsYOffset + (2.75f * optionsFontSize),optionsFontSize/2f, Color.WHITE);
-                    textRenderer.renderTextOld(night6Unlocked ?  "6th Night" : obfuscateText("6th Night"), 140 * (width / 1920f), optionsYOffset + (4 * optionsFontSize),optionsFontSize,  night6Unlocked ? Color.WHITE : Color.GRAY);
-                    textRenderer.renderTextOld(customNightUnlocked ?  "Custom Night" : obfuscateText("Custom Night"), 140 * (width / 1920f), optionsYOffset + (5 * optionsFontSize),optionsFontSize,  customNightUnlocked ? Color.WHITE : Color.GRAY);
-                    textRenderer.renderTextOld(ventaBlackNightUnlocked ?  "Venta Black Night" : obfuscateText("Venta Black Night"), 140 * (width / 1920f), optionsYOffset + (6 * optionsFontSize),optionsFontSize, ventaBlackNightUnlocked ? Color.WHITE : Color.GRAY);
-                    textRenderer.renderTextOld("Settings", 140 * (width / 1920f), optionsYOffset + (7 * optionsFontSize),optionsFontSize, Color.WHITE);
-                    textRenderer.renderTextOld(night6Unlocked ?  "Online" : obfuscateText("Online"), 140 * (width / 1920f), optionsYOffset + (8 * optionsFontSize),optionsFontSize, loggedIn ? (night6Unlocked ? Color.WHITE : Color.GRAY) : Color.GRAY);
+                    textRenderer.renderTextOld("New Game", 140 * (width / 1920f), optionsYOffset + (2 * optionsFontSize),optionsFontSize, c);
+                    textRenderer.renderTextOld("Continue", 140 * (width / 1920f), optionsYOffset + (3 * optionsFontSize),optionsFontSize, c);
+                    textRenderer.renderTextOld(" -> Night " + nightNumber, 350 * (width / 1920f), optionsYOffset + (2.75f * optionsFontSize),optionsFontSize/2f, c);
+                    textRenderer.renderTextOld(night6Unlocked ?  "6th Night" : obfuscateText("6th Night"), 140 * (width / 1920f), optionsYOffset + (4 * optionsFontSize),optionsFontSize,  night6Unlocked ? c : Color.GRAY);
+                    textRenderer.renderTextOld(customNightUnlocked ?  "Custom Night" : obfuscateText("Custom Night"), 140 * (width / 1920f), optionsYOffset + (5 * optionsFontSize),optionsFontSize,  customNightUnlocked ? c : Color.GRAY);
+                    textRenderer.renderTextOld(ventaBlackNightUnlocked ?  "Venta Black Night" : obfuscateText("Venta Black Night"), 140 * (width / 1920f), optionsYOffset + (6 * optionsFontSize),optionsFontSize, ventaBlackNightUnlocked ? c : Color.GRAY);
+                    textRenderer.renderTextOld("Settings", 140 * (width / 1920f), optionsYOffset + (7 * optionsFontSize),optionsFontSize, c);
+                    textRenderer.renderTextOld(night6Unlocked ?  "Online" : obfuscateText("Online"), 140 * (width / 1920f), optionsYOffset + (8 * optionsFontSize),optionsFontSize, loggedIn ? (night6Unlocked ? c : Color.GRAY) : Color.GRAY);
 
                     switch (menuSelection) {
-                        case 0 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (2 * optionsFontSize),optionsFontSize, Color.WHITE);
-                        case 1 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (3 * optionsFontSize),optionsFontSize, Color.WHITE);
-                        case 2 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (4 * optionsFontSize),optionsFontSize, Color.WHITE);
-                        case 3 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (5 * optionsFontSize),optionsFontSize, Color.WHITE);
-                        case 4 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (6 * optionsFontSize),optionsFontSize, Color.WHITE);
-                        case 5 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (7 * optionsFontSize),optionsFontSize, Color.WHITE);
-                        case 6 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (8 * optionsFontSize),optionsFontSize, loggedIn ? Color.WHITE : Color.GRAY);
+                        case 0 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (2 * optionsFontSize),optionsFontSize, c);
+                        case 1 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (3 * optionsFontSize),optionsFontSize, c);
+                        case 2 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (4 * optionsFontSize),optionsFontSize, c);
+                        case 3 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (5 * optionsFontSize),optionsFontSize, c);
+                        case 4 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (6 * optionsFontSize),optionsFontSize, c);
+                        case 5 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (7 * optionsFontSize),optionsFontSize, c);
+                        case 6 -> textRenderer.renderTextOld(">>", 70 * (width / 1920f), optionsYOffset + (8 * optionsFontSize),optionsFontSize, loggedIn ? c : Color.GRAY);
                     }
 
                     if(loggedIn) textRenderer.renderTextOld("Online - " + username + " (" + displayName + ")", 10 * (height / 1080f), (height-60 * (height / 1080f)),30 * (height / 1080f), Color.GREEN);
                     else textRenderer.renderTextOld("Offline", 10 * (height / 1080f), (height-60 * (height / 1080f)),30 * (height / 1080f), Color.RED);
-                    textRenderer.renderTextOld(version, 10 * (height / 1080f), (height-20 * (height / 1080f)),30 * (height / 1080f), Color.WHITE);
+                    textRenderer.renderTextOld(version, 10 * (height / 1080f), (height-20 * (height / 1080f)),30 * (height / 1080f), c);
 
-                    renderer.renderTexture(.15f,.75f,.1f,.1f * ((float) width / height),textures.get(night6Unlocked ? "star.png" : "star.empty.png"),false,false,0);
-                    renderer.renderTexture(.35f,.75f,.1f,.1f * ((float) width / height),textures.get(customNightUnlocked ? "star.png" : "star.empty.png"),false,false,0);
-                    renderer.renderTexture(.55f,.75f,.1f,.1f * ((float) width / height),textures.get(ventaBlackNightUnlocked ? "star.png" : "star.empty.png"),false,false,0);
-                    renderer.renderTexture(.75f,.7f,.15f,.15f * ((float) width / height),textures.get(ventaBlackNightCompleted ? "star.png" : "star.empty.png"),false,false,0);
+                    renderer.renderTexture(.15f,.75f,.1f,.1f * ((float) width / height),textures.get(night6Unlocked ? "star.png" : "star.empty.png"),false,false,0,c);
+                    renderer.renderTexture(.35f,.75f,.1f,.1f * ((float) width / height),textures.get(customNightUnlocked ? "star.png" : "star.empty.png"),false,false,0,c);
+                    renderer.renderTexture(.55f,.75f,.1f,.1f * ((float) width / height),textures.get(ventaBlackNightUnlocked ? "star.png" : "star.empty.png"),false,false,0,c);
+                    renderer.renderTexture(.75f,.7f,.15f,.15f * ((float) width / height),textures.get(ventaBlackNightCompleted ? "star.png" : "star.empty.png"),false,false,0,c);
                     break;
                 }
                 case PRE_GAME : {
@@ -2037,8 +2048,8 @@ public class FNAFMain {
                     }
                     menu = Menu.MAIN_MENU;
                     sounds.get("Static2.ogg").play();
-                    sounds.get("Mainmenu1.ogg").play();
-                    sounds.get("Mainmenu1.ogg").setRepeating(true);
+                    sounds.get(mainmenuSong).play();
+                    sounds.get(mainmenuSong).setRepeating(true);
                 }
                 m.jumpscare = null;
             }
