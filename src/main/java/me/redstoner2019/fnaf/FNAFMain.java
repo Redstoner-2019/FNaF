@@ -1090,9 +1090,13 @@ public class FNAFMain {
 
         setWindowIcon(window);
 
+        if(!new File("res").exists()){
+            throw new RuntimeException("res folder missing");
+        }
+
         System.out.println("Loading loading screen texture...");
-        loadingTexture = Texture.loadTextureFromResource("textures/jump.jpg");
-        textures.put("white.png",Texture.loadTextureFromResource("textures/white.png"));
+        loadingTexture = Texture.loadTexture("res/textures/jump.jpg");
+        textures.put("white.png",Texture.loadTextureFromResource("res/textures/white.png"));
         System.out.println();
     }
 
