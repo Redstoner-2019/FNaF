@@ -1,7 +1,5 @@
 package me.redstoner2019.fnaf;
 
-import me.redstoner2019.Utilities;
-import me.redstoner2019.client.AuthenticatorClient;
 import me.redstoner2019.fnaf.game.NightConfiguration;
 import me.redstoner2019.fnaf.game.game.Notification;
 import me.redstoner2019.fnaf.game.stats.StatisticClient;
@@ -29,9 +27,11 @@ import java.awt.*;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static me.redstoner2019.fnaf.Menu.CUSTOM_NIGHT;
 import static org.lwjgl.glfw.GLFW.*;
@@ -1109,7 +1109,7 @@ public class FNAFMain {
 
         //message = "This is a Loading message";
 
-        message = count + " / " + max + " loaded " + message;
+        message = max + " / " + count + " loaded " + message;
 
         float textWidth = textRenderer.textWidth(message,20) / renderer.getWidth();
 
@@ -1167,40 +1167,82 @@ public class FNAFMain {
         GLFW.glfwSwapBuffers(window);
         GLFW.glfwPollEvents();
 
-        try {
-            soundManager = SoundManager.getInstance();
+        boolean experimentalTextureLoading = true;
 
-            JSONObject data = new JSONObject(new String(Thread.currentThread().getContextClassLoader().getResourceAsStream("map.json").readAllBytes()));
-            JSONObject texture = data.getJSONObject("textures");
-            JSONObject audios = data.getJSONObject("audio");
+        if(experimentalTextureLoading){
+            File file = new File("res");
 
-            int loadCounter = 0;
-            int totalToLoad = texture.keySet().size() + audios.keySet().size();
+            if(!file.exists()){
+                throw new RuntimeException("Missing res folder");
+            }
 
-            for(String s : texture.keySet()){
-                System.out.println("Loading buffered texture: " + s);
-                textures.put(s,Texture.loadTextureFromResource(texture.getString(s)));
+            try {
+                AtomicInteger loadCounter = new AtomicInteger();
+                int totalToLoad = Files.walk(file.toPath()).filter(Files::isRegularFile).toList().size();
+
+                //Load Textures
+                file = new File("res/textures");
+                Files.walk(file.toPath())
+                        .filter(Files::isRegularFile) // Only list files; remove this line to include directories
+                        .forEach(f -> {
+                            System.out.println("Loading texture " +  f.toFile().getName());
+                            textures.put(f.toFile().getName(),Texture.loadTexture(f.toString()));
+
+                            loadCounter.getAndIncrement();
+                            startupLoading(totalToLoad, loadCounter.get(), f.toString());
+                        });
+
+                //Load Sounds
+                file = new File("res/audio");
+                Files.walk(file.toPath())
+                        .filter(Files::isRegularFile) // Only list files; remove this line to include directories
+                        .forEach(f -> {
+                            System.out.println("Loading audio " +  f.toFile().getName());
+                            Sound so = new Sound(f.toFile().getAbsolutePath(),false);
+                            sounds.put(f.toFile().getName(),so);
+
+                            loadCounter.getAndIncrement();
+                            startupLoading(totalToLoad, loadCounter.get(), f.toString());
+                        });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                soundManager = SoundManager.getInstance();
+
+                JSONObject data = new JSONObject(new String(Thread.currentThread().getContextClassLoader().getResourceAsStream("map.json").readAllBytes()));
+                JSONObject texture = data.getJSONObject("textures");
+                JSONObject audios = data.getJSONObject("audio");
+
+                int loadCounter = 0;
+                int totalToLoad = texture.keySet().size() + audios.keySet().size();
+
+                for(String s : texture.keySet()){
+                    System.out.println("Loading buffered texture: " + s);
+                    textures.put(s,Texture.loadTextureFromResource(texture.getString(s)));
+                    System.out.println();
+
+                    loadCounter++;
+
+                    startupLoading(totalToLoad,loadCounter, s);
+                }
+
+                System.out.println("Loading sounds.");
+
                 System.out.println();
 
-                loadCounter++;
+                for(String s : audios.keySet()){
+                    Sound so = new Sound(audios.getString(s),false);
+                    sounds.put(s,so);
 
-                startupLoading(totalToLoad,loadCounter, s);
+                    loadCounter++;
+
+                    startupLoading(totalToLoad,loadCounter, s);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-
-            System.out.println("Loading sounds.");
-
-            System.out.println();
-
-            for(String s : audios.keySet()){
-                Sound so = new Sound(audios.getString(s),false);
-                sounds.put(s,so);
-
-                loadCounter++;
-
-                startupLoading(totalToLoad,loadCounter, s);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
 
         if(ventaBlackNightUnlocked) {

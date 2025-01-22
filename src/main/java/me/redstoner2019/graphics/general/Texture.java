@@ -1,5 +1,6 @@
 package me.redstoner2019.graphics.general;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -214,6 +215,9 @@ public class Texture {
         System.out.println("Creating Buffer for " + resourcePath);
         try {
             InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath);
+            if(is == null){
+                is = new FileInputStream(resourcePath);
+            }
             byte[] bytes = IOUtils.toByteArray(is);
             ByteBuffer imageBuffer = ByteBuffer.allocateDirect(bytes.length);
             imageBuffer.put(bytes);
