@@ -91,7 +91,6 @@ public class FNAFMain {
 
     private String TOKEN = "TOKEN";
     public StatisticClient client;
-    public static boolean offlineMode = true;
     public static boolean loggedIn = false;
     public static String username = "";
     public static String displayName = "";
@@ -103,8 +102,10 @@ public class FNAFMain {
     private TextRenderer textRenderer;
     private KeyboardInputHandler inputHandler = new KeyboardInputHandler();
 
-    public String version = "v1.4.0";
-    public int versionNumber = 1;
+    public String version = "v1.4.1-alpha.1";
+    public int versionNumber = 0;
+    public String gameID = "";
+    public HashMap<String, String> challengeIds = new HashMap<>();
 
     public FNAFMain() {
         fnafMain = this;
@@ -123,46 +124,129 @@ public class FNAFMain {
     }
 
     public void run(String[] args) throws IOException {
-        load();
-
-        //TODO Change back to default
-        client = new StatisticClient(Utilities.getIPData().getString("statistics-server"),Utilities.getIPData().getInt("statistics-server-port"));
-        //client = new StatisticClient("localhost",Utilities.getIPData().getInt("statistics-server-port"));
-
-        System.out.println("Stat client " + client.isConnected());
-
-        if(new File("waitingToSend.json").exists() && client.isConnected()){
-            System.out.println("Reading to send");
-            FileInputStream fis = new FileInputStream("waitingToSend.json");
-            try {
-                System.out.println("Writing to send");
-                client.sendRequest(new JSONObject(new String(fis.readAllBytes())));
-                System.out.println("Request sent") ;
-                new FileOutputStream("waitingToSend.json").write(new byte[0]);
-                new File("waitingToSend.json").delete();
-                System.out.println("To send deleted");
-            } catch (Exception e) {
-
-            }
-        }
-
-        System.out.println("Stat client " + client.isConnected());
-
         if(args.length > 0) TOKEN = args[0];
 
-        loggedIn = false;
+        load();
 
-        init();
+        try{
+            String baseIp = "http://158.220.105.209:8082";
+            baseIp = "http://localhost:8082";
 
-        System.out.println("Stat Server Connection: " + client.isConnected());
-        System.out.println();
-
-        if(client.isConnected()){
             JSONObject request = new JSONObject();
+            request.put("name","FNaF");
+            request.put("version",version);
+            request.put("versionNumber",versionNumber);
+
+            JSONObject response = Requests.request(baseIp + "/stats/game/create",request);
+
+            request = new JSONObject();
+            request.put("game","FNaF");
+            request.put("version",version);
+
+            response = Requests.request(baseIp + "/stats/game/get",request);
+
+            gameID = response.getString("id");
+
+            /**
+             * Challenge Ventablack Endless
+             */
+
+            JSONObject exampleData = new JSONObject();
+            exampleData.put("timeLasted",0);
+            exampleData.put("powerLeft",0.0);
+            exampleData.put("deathCause","Blackout");
+            exampleData.put("foxyAttacks",0);
+
+            request = new JSONObject();
+            request.put("name","Ventablack Endless");
+            request.put("description","Survive as long as possible in the Ventablack endless night.");
+            request.put("game",gameID);
+            request.put("data",exampleData);
+
+            response = Requests.request(baseIp + "/stats/challenge/create",request);
+
+            challengeIds.put("ventablack_endless",response.getString("id"));
+
+            /**
+             * Challenge 4/20 Endless
+             */
+
+            exampleData = new JSONObject();
+            exampleData.put("timeLasted",0);
+            exampleData.put("powerLeft",0.0);
+            exampleData.put("deathCause","Blackout");
+            exampleData.put("foxyAttacks",0);
+
+            request = new JSONObject();
+            request.put("name","4/20 Endless");
+            request.put("description","Survive as long as possible in the 4/20 endless night.");
+            request.put("game",gameID);
+            request.put("data",exampleData);
+
+            response = Requests.request(baseIp + "/stats/challenge/create",request);
+
+            challengeIds.put("night_4_20_endless",response.getString("id"));
+
+            /**
+             * Challenge Night 6 Greenrun
+             */
+
+            exampleData = new JSONObject();
+            exampleData.put("powerLeft",0.0);
+            exampleData.put("deathCause","Blackout");
+            exampleData.put("foxyAttacks",0);
+
+            request = new JSONObject();
+            request.put("name","Night 6 Greenrun");
+            request.put("description","Greenrun night 6 and try to preserve as much power as possible.");
+            request.put("game",gameID);
+            request.put("data",exampleData);
+
+            response = Requests.request(baseIp + "/stats/challenge/create",request);
+
+            challengeIds.put("night_6",response.getString("id"));
+
+            /**
+             * Challenge 4/20 Greenrun
+             */
+
+            exampleData = new JSONObject();
+            exampleData.put("powerLeft",0.0);
+            exampleData.put("deathCause","Blackout");
+            exampleData.put("foxyAttacks",0);
+
+            request = new JSONObject();
+            request.put("name","4/20 Greenrun");
+            request.put("description","Greenrun 4/20 mode and try to preserve as much power as possible.");
+            request.put("game",gameID);
+            request.put("data",exampleData);
+
+            response = Requests.request(baseIp + "/stats/challenge/create",request);
+
+            challengeIds.put("night_4_20",response.getString("id"));
+
+            /**
+             * Challenge Ventablack Greenrun
+             */
+
+            exampleData = new JSONObject();
+            exampleData.put("powerLeft",0.0);
+            exampleData.put("deathCause","Blackout");
+            exampleData.put("foxyAttacks",0);
+
+            request = new JSONObject();
+            request.put("name","Ventablack Greenrun");
+            request.put("description","Greenrun Ventablack and try to preserve as much power as possible.");
+            request.put("game",gameID);
+            request.put("data",exampleData);
+
+            response = Requests.request(baseIp + "/stats/challenge/create",request);
+
+            challengeIds.put("ventablack",response.getString("id"));
+
+            request = new JSONObject();
             request.put("token",TOKEN);
             JSONObject o = Requests.request("http://158.220.105.209:8080/verifyToken",request);
-
-            System.out.println("Auth client Connected");
 
             if(o.getInt("status") != 0){
                 loggedIn = false;
@@ -174,14 +258,24 @@ public class FNAFMain {
                 System.out.println("Logged in as " + username);
                 loggedIn = true;
             }
-            offlineMode = false;
-        }else {
-            offlineMode = true;
+        }catch (Exception e){
             loggedIn = false;
-            System.out.println("Offline mode, not connected to auth server");
+            System.err.println(e.getLocalizedMessage());
+        }
+
+        if(new File("waitingToSend.json").exists()){
+            FileInputStream fis = new FileInputStream("waitingToSend.json");
+            try {
+                JSONObject toSend = new JSONObject(new String(fis.readAllBytes()));
+                //new File("waitingToSend.json").delete();
+                fis.close();
+            } catch (Exception e) {
+
+            }
         }
 
         save();
+        init();
         loop();
     }
 
@@ -1136,10 +1230,6 @@ public class FNAFMain {
         while (!GLFW.glfwWindowShouldClose(window)) {
             double start = glfwGetTime();
 
-            if(!client.isConnected()) {
-                loggedIn = false;
-            }
-
             if(ventaBlackNightUnlocked) {
                 mainmenuSong = "mainmenuEerie.ogg";
             }
@@ -1606,7 +1696,6 @@ public class FNAFMain {
 
                     if(System.currentTimeMillis() <= cameraBlackout) {
                         renderer.renderTexture(-1,-1,2,2,textures.get("white.png"),true,true,.3f,new Color(0,0,0,255));
-                        System.out.println(System.currentTimeMillis() + " / " + cameraBlackout);
                     } else {
                         if(!gameManager.getCamera().equals(Camera6.getInstance())) renderer.renderTexture(-1.25f + (cameraScroll * 0.25f),-1,2.5f,2,textures.get(gameManager.getCamera().getImage(cameraRandomness,cameraRandomness2)),true,true,glitchStrength > 1 ? 1 : glitchStrength);
                         else {

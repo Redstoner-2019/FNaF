@@ -303,24 +303,7 @@ public class NightConfiguration {
 
     @Override
     public String toString() {
-        return "NightConfiguration{" +
-                "freddyAI=" + freddyAI +
-                ", bonnieAI=" + bonnieAI +
-                ", chicaAI=" + chicaAI +
-                ", foxyAI=" + foxyAI +
-                ", freddyMovementSpeed=" + freddyMovementSpeed +
-                ", bonnieMovementSpeed=" + bonnieMovementSpeed +
-                ", chicaMovementSpeed=" + chicaMovementSpeed +
-                ", foxyMovementSpeed=" + foxyMovementSpeed +
-                ", am1Increases=" + am1Increases +
-                ", am2Increases=" + am2Increases +
-                ", am3Increases=" + am3Increases +
-                ", am4Increases=" + am4Increases +
-                ", am5Increases=" + am5Increases +
-                ", nightLength=" + nightLength +
-                ", endlessNight=" + endlessNight +
-                ", nightNumber=" + nightNumber +
-                ", idleUsage=" + idleUsage +
-                '}';
+        System.out.println("Challenge " + challenge);
+        return convertToJSON().toString();
     }
 }

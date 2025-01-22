@@ -26,6 +26,13 @@ public class Requests {
                 os.write(input, 0, input.length);
             }
 
+            if(connection.getResponseCode() != 200){
+                JSONObject error = new JSONObject();
+                error.put("code", connection.getResponseCode());
+                error.put("message", connection.getResponseMessage());
+                return error;
+            }
+
             // Get response code
             BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             String inputLine;
@@ -36,7 +43,9 @@ public class Requests {
             }
             in.close();
 
-            return new JSONObject(response.toString());
+            JSONObject json = new JSONObject(response.toString());
+            json.put("code", connection.getResponseCode());
+            return json;
         } catch (Exception e) {
             e.printStackTrace();
             return new JSONObject();

@@ -11,6 +11,7 @@ import me.redstoner2019.fnaf.game.animatronics.Chica;
 import me.redstoner2019.fnaf.game.animatronics.Foxy;
 import me.redstoner2019.fnaf.game.animatronics.Freddy;
 import me.redstoner2019.fnaf.game.cameras.*;
+import me.redstoner2019.util.http.Requests;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -1003,41 +1004,52 @@ public class GameManager {
         return aniAI * aniSpeed;
     }
 
-    public void sendData(){
-        if(challenge != null) {
-            try {
-                JSONObject data = new JSONObject();
+    public void sendChallenge(){
+        JSONObject request = new JSONObject();
+        request.put("challengeId",fnafMain.challengeIds.get(challenge));
 
-                data.put("version", fnafMain.version);
-                data.put("version-number", fnafMain.versionNumber);
+        JSONObject data = new JSONObject();
 
-                data.put("foxy-attacks",foxyAttacks);
-                data.put("death",deathTo);
+        request.put("data",data);
+        request.put("userId", username);
+        request.put("score", 0);
 
-                data.put("time",System.currentTimeMillis());
-                data.put("username",username);
-                data.put("power-left",power);
-                data.put("time-lasted",System.currentTimeMillis() - nightStart);
-
-                if(fnafMain.client.isConnected()){
-                    fnafMain.client.createEntry("FNaF",challenge,data);
-                } else {
-                    JSONObject toSend = new JSONObject();
-
-                    toSend.put("data",data);
-                    toSend.put("game","FNaF");
-                    toSend.put("challenge",challenge);
-                    toSend.put("header","add-entry");
-
-                    new File("waitingToSend.json").createNewFile();
-
-                    FileOutputStream outputStream = new FileOutputStream(new File("waitingToSend.json"));
-
-                    outputStream.write(toSend.toString().getBytes());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+        switch (challenge) {
+            case "ventablack_endless", "night_4_20_endless" -> {
+                data.put("deathCause",deathTo);
+                data.put("timeLasted",System.currentTimeMillis() - nightStart);
+                data.put("powerLeft",power);
+                data.put("foxyAttacks",foxyAttacks);
+                request.put("score",System.currentTimeMillis() - nightStart);
             }
+            case "night_6", "night_4_20", "ventablack" -> {
+                data.put("deathCause",deathTo);
+                data.put("powerLeft",power);
+                data.put("foxyAttacks",foxyAttacks);
+                request.put("score",power*100);
+            }
+        }
+
+        try{
+            System.out.println(Requests.request("http://localhost:8082/stats/challengeEntry/create",request).toString(3));
+        }catch (Exception e){
+            try {
+                new File("waitingToSend.json").createNewFile();
+
+                FileOutputStream outputStream = new FileOutputStream("waitingToSend.json");
+
+                outputStream.write(request.toString().getBytes());
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+    }
+
+    public void sendData(){
+        System.out.println("Challenge " + challenge);
+        if(challenge != null) {
+            sendChallenge();
         }
     }
 
