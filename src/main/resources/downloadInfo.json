@@ -1,0 +1,43 @@
+{
+  "versions": {
+    "linux-x64": {
+      "main": {
+        "name": "FiveNightsAtFreddys-linux-x64.jar",
+        "saveLocation": "FiveNightsAtFreddys-linux-x64.jar"
+      },
+      "files": {
+        "resources.zip": {
+          "location": "/",
+          "actions": {
+            "unzip": {
+              "location": "/",
+              "deleteAfter": true
+            }
+          }
+        }
+      },
+      "launch": "java -jar %filename% %TOKEN% false"
+    },
+    "windows-x64": {
+      "main": {
+        "name": "FiveNightsAtFreddys-windows-x64.jar",
+        "saveLocation": "FiveNightsAtFreddys-windows-x64.jar"
+      },
+      "files": {
+        "resources.zip": {
+          "location": "/",
+          "actions": {
+            "unzip": {
+              "location": "/",
+              "deleteAfter": true
+            }
+          }
+        }
+      },
+      "launch": "java -jar %filename% %TOKEN% false"
+    }
+  },
+  "storeAt": {
+
+  }
+}

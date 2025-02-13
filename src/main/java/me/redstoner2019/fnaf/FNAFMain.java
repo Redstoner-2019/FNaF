@@ -1111,8 +1111,6 @@ public class FNAFMain {
         renderer.renderTextureBounds(-0.74f,-0.61f,0.74f,-0.69f,textures.get("white.png"),true,false,0,Color.BLACK);
         renderer.renderTextureBounds(-0.73f,-0.62f,-0.73f + width,-0.68f,textures.get("white.png"),true,false,0);
 
-        //message = "This is a Loading message";
-
         message = max + " / " + count + " loaded " + message;
 
         float textWidth = textRenderer.textWidth(message,20) / renderer.getWidth();
@@ -1187,7 +1185,7 @@ public class FNAFMain {
                 //Load Textures
                 file = new File("res/textures");
                 Files.walk(file.toPath())
-                        .filter(Files::isRegularFile) // Only list files; remove this line to include directories
+                        .filter(Files::isRegularFile)
                         .forEach(f -> {
                             System.out.println("Loading texture " +  f.toFile().getName());
                             textures.put(f.toFile().getName(),Texture.loadTexture(f.toString()));
