@@ -16,7 +16,9 @@ import me.redstoner2019.fnaf.game.animatronics.Freddy;
 import me.redstoner2019.fnaf.game.cameras.*;
 import me.redstoner2019.fnaf.game.game.GameManager;
 import me.redstoner2019.graphics.general.Renderer;
+import me.redstoner2019.util.http.Method;
 import me.redstoner2019.util.http.Requests;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -89,7 +91,7 @@ public class FNAFMain {
     private int chicaAI = 0;
     private int foxyAI = 8;
 
-    private String TOKEN = "TOKEN";
+    public String TOKEN = "TOKEN";
     public StatisticClient client;
     public static boolean loggedIn = false;
     public static String username = "";
@@ -129,10 +131,14 @@ public class FNAFMain {
         load();
 
         try{
-            String baseIp = "http://158.220.105.209:8082";
+            JSONObject request = new JSONObject();
+
+
+
+            /*String baseIp = "http://158.220.105.209:8082";
             baseIp = "http://localhost:8082";
 
-            JSONObject request = new JSONObject();
+            request = new JSONObject();
             request.put("name","FNaF");
             request.put("version",version);
             request.put("versionNumber",versionNumber);
@@ -151,7 +157,7 @@ public class FNAFMain {
              * Challenge Ventablack Endless
              */
 
-            JSONObject exampleData = new JSONObject();
+            /*JSONObject exampleData = new JSONObject();
             exampleData.put("timeLasted",0);
             exampleData.put("powerLeft",0.0);
             exampleData.put("deathCause","Blackout");
@@ -171,7 +177,7 @@ public class FNAFMain {
              * Challenge 4/20 Endless
              */
 
-            exampleData = new JSONObject();
+            /*exampleData = new JSONObject();
             exampleData.put("timeLasted",0);
             exampleData.put("powerLeft",0.0);
             exampleData.put("deathCause","Blackout");
@@ -191,7 +197,7 @@ public class FNAFMain {
              * Challenge Night 6 Greenrun
              */
 
-            exampleData = new JSONObject();
+            /*exampleData = new JSONObject();
             exampleData.put("powerLeft",0.0);
             exampleData.put("deathCause","Blackout");
             exampleData.put("foxyAttacks",0);
@@ -210,7 +216,7 @@ public class FNAFMain {
              * Challenge 4/20 Greenrun
              */
 
-            exampleData = new JSONObject();
+            /*exampleData = new JSONObject();
             exampleData.put("powerLeft",0.0);
             exampleData.put("deathCause","Blackout");
             exampleData.put("foxyAttacks",0);
@@ -229,7 +235,7 @@ public class FNAFMain {
              * Challenge Ventablack Greenrun
              */
 
-            exampleData = new JSONObject();
+            /*exampleData = new JSONObject();
             exampleData.put("powerLeft",0.0);
             exampleData.put("deathCause","Blackout");
             exampleData.put("foxyAttacks",0);
@@ -257,20 +263,34 @@ public class FNAFMain {
                 displayName = o.getString("displayname");
                 System.out.println("Logged in as " + username);
                 loggedIn = true;
-            }
+            }*/
         }catch (Exception e){
             loggedIn = false;
             System.err.println(e.getLocalizedMessage());
         }
 
-        if(new File("waitingToSend.json").exists()){
-            FileInputStream fis = new FileInputStream("waitingToSend.json");
-            try {
-                JSONObject toSend = new JSONObject(new String(fis.readAllBytes()));
-                //new File("waitingToSend.json").delete();
-                fis.close();
-            } catch (Exception e) {
+        File toSend = new File("waitingToSend.json");
 
+        if(toSend.exists()){
+            FileInputStream fis = new FileInputStream(toSend);
+            JSONArray waitingToSend = new JSONArray(new String(fis.readAllBytes()));
+            fis.close();
+
+            for (int i = 0; i < waitingToSend.length(); i++) {
+                JSONObject request = waitingToSend.getJSONObject(i);
+
+                HashMap<String, String> headers = new HashMap<>();
+                headers.put("Authorization","Bearer " + fnafMain.TOKEN);
+
+                JSONObject result = Requests.request(Method.POST,"https://stats.redstonedev.io/stats/challengeEntry/crate",request, headers);
+
+                if(result.getInt("code") == -1 || (result.getInt("code") != 200 && result.getInt("code") != 206)){
+                    break;
+                }
+
+                if(i == waitingToSend.length() - 1){
+                    toSend.delete();
+                }
             }
         }
 

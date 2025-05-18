@@ -11,13 +11,18 @@ import me.redstoner2019.fnaf.game.animatronics.Chica;
 import me.redstoner2019.fnaf.game.animatronics.Foxy;
 import me.redstoner2019.fnaf.game.animatronics.Freddy;
 import me.redstoner2019.fnaf.game.cameras.*;
+import me.redstoner2019.util.http.Method;
 import me.redstoner2019.util.http.Requests;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Random;
+import java.util.logging.Handler;
 
 import static me.redstoner2019.fnaf.FNAFMain.*;
 import static org.lwjgl.glfw.GLFW.glfwGetTime;
@@ -1010,40 +1015,51 @@ public class GameManager {
 
         JSONObject data = new JSONObject();
 
-        request.put("data",data);
-        request.put("userId", username);
-        request.put("score", 0);
-
         switch (challenge) {
             case "ventablack_endless", "night_4_20_endless" -> {
-                data.put("deathCause",deathTo);
+                data.put("death",deathTo);
                 data.put("timeLasted",System.currentTimeMillis() - nightStart);
                 data.put("powerLeft",power);
                 data.put("foxyAttacks",foxyAttacks);
                 request.put("score",System.currentTimeMillis() - nightStart);
             }
             case "night_6", "night_4_20", "ventablack" -> {
-                data.put("deathCause",deathTo);
+                data.put("death",deathTo);
                 data.put("powerLeft",power);
-                data.put("foxyAttacks",foxyAttacks);
+                data.put("timeLasted",System.currentTimeMillis() - nightStart);
+                //data.put("foxyAttacks",foxyAttacks);
                 request.put("score",power*100);
             }
         }
 
-        try{
-            System.out.println(Requests.request("http://localhost:8082/stats/challengeEntry/create",request).toString(3));
-        }catch (Exception e){
+        request.put("data",data);
+        request.put("score", 0);
+
+
+
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("Authorization","Bearer " + fnafMain.TOKEN);
+
+        JSONObject result = Requests.request(Method.POST,"https://stats.redstonedev.io/stats/challengeEntry/crate",request, headers);
+
+        if(result.getInt("code") == -1 || (result.getInt("code") != 200 && result.getInt("code") != 206)){
             try {
-                new File("waitingToSend.json").createNewFile();
-
-                FileOutputStream outputStream = new FileOutputStream("waitingToSend.json");
-
-                outputStream.write(request.toString().getBytes());
+                File file = new File("waitingToSend.json");
+                FileOutputStream fos = new FileOutputStream(file);
+                if(file.exists()) {
+                    FileInputStream fis = new FileInputStream(file);
+                    JSONArray waiting = new JSONArray(new String(fis.readAllBytes()));
+                    waiting.put(request);
+                    fos.write(waiting.toString(3).getBytes());
+                } else {
+                    JSONArray waiting = new JSONArray();
+                    waiting.put(request);
+                    fos.write(waiting.toString(3).getBytes());
+                }
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
         }
-
     }
 
     public void sendData(){

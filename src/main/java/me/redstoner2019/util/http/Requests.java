@@ -6,49 +6,45 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 
 public class Requests {
-    public static JSONObject request(String address, JSONObject data){
+    public static JSONObject request(Method method, String address, JSONObject data){
+        return request(method,address,data,new HashMap<>());
+    }
+    public static JSONObject request(Method method, String address, JSONObject data, HashMap<String, String> headers){
         try {
-            URL url = new URL(address);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
+            HttpClient client = HttpClient.newHttpClient();
 
-            connection.setRequestProperty("Content-Type", "application/json; utf-8");
-            connection.setRequestProperty("Accept", "application/json");
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(address))
+                    .header("Content-Type","application/json");
 
-            connection.setDoOutput(true);
-
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = data.toString().getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
+            for(String header : headers.keySet()){
+                requestBuilder.header(header,headers.get(header));
             }
 
-            if(connection.getResponseCode() != 200){
-                JSONObject error = new JSONObject();
-                error.put("code", connection.getResponseCode());
-                error.put("message", connection.getResponseMessage());
-                return error;
-            }
+            HttpRequest request = requestBuilder.POST(HttpRequest.BodyPublishers.ofString(data.toString())).build();
 
-            // Get response code
-            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            String inputLine;
-            StringBuilder response = new StringBuilder();
-
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
-            }
-            in.close();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             JSONObject json = new JSONObject(response.toString());
-            json.put("code", connection.getResponseCode());
+            json.put("code", response.statusCode());
+            json.put("body", response.body());
             return json;
         } catch (Exception e) {
             e.printStackTrace();
-            return new JSONObject();
+
+            JSONObject json = new JSONObject();
+            json.put("code", -1);
+            return json;
         }
     }
 }
+
