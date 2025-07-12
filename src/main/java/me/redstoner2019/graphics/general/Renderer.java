@@ -38,6 +38,10 @@ public class Renderer {
         return INSTANCE;
     }
 
+    public int getShaderId(){
+        return renderShader.id;
+    }
+
     public float getAspectRatio(){
         return (float) width / height;
     }

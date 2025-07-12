@@ -7,6 +7,7 @@ out vec2 fragTexCoord;
 
 uniform vec2 offset;
 uniform vec2 offsetScale;
+uniform int newRandom = 1;
 
 void main() {
 

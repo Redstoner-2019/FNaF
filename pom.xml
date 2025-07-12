@@ -12,20 +12,6 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                            <mainClass>me.redstoner2019.fnaf.FNAFMain</mainClass> <!-- Replace with your actual main class -->
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.2.4</version>
                 <executions>
@@ -35,6 +21,8 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>me.redstoner2019.fnaf.FNAFMain</mainClass>
@@ -162,16 +150,6 @@
     </dependencyManagement>
 
     <dependencies>
-        <dependency>
-            <groupId>utilities</groupId>
-            <artifactId>me.redstoner2019</artifactId>
-            <version>1.0.3</version>
-        </dependency>
-        <dependency>
-            <groupId>me.redstoner2019</groupId>
-            <artifactId>authenticationserver</artifactId>
-            <version>1.0.1</version>
-        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.json/json -->
         <dependency>

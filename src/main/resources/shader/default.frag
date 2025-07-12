@@ -10,13 +10,29 @@ uniform vec2 texScale;
 uniform vec4 color = vec4(1,1,1,1);
 uniform float noiseLevel = .5;
 uniform float seed = 0;
+uniform int newRandom = 1;
 
-
-
-float random(vec2 st)
+float oldrandom(vec2 uv)
 {
-    return ((fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123)));
+    uv = fract(uv * vec2(123.34, 456.21));
+    uv += dot(uv, uv + 45.32);
+    return fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453);
 }
+
+float newrand(vec2 co) {
+    return fract(sin(dot(co.xy ,vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float random(vec2 uv) {
+    if(newRandom == 1) {
+        return oldrandom(uv);
+    }
+    if(newRandom == 0) {
+        return newrand(uv);
+    }
+    return 0;
+}
+
 
 vec4 lerp(vec4 a, vec4 b, float t) {
     return a + (b - a) * t;

@@ -30,14 +30,30 @@ public class Requests {
                 requestBuilder.header(header,headers.get(header));
             }
 
-            HttpRequest request = requestBuilder.POST(HttpRequest.BodyPublishers.ofString(data.toString())).build();
+            HttpRequest request;
+
+            switch (method){
+                case POST -> request = requestBuilder.POST(HttpRequest.BodyPublishers.ofString(data.toString())).build();
+                case GET -> request = requestBuilder.GET().build();
+                case PUT -> request = requestBuilder.PUT(HttpRequest.BodyPublishers.ofString(data.toString())).build();
+                case DELETE -> request = requestBuilder.DELETE().build();
+                default -> throw new IllegalArgumentException("Invalid method!");
+            }
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            JSONObject json = new JSONObject(response.toString());
-            json.put("code", response.statusCode());
-            json.put("body", response.body());
-            return json;
+            try{
+                JSONObject json = new JSONObject(response.body());
+                json.put("code", response.statusCode());
+                json.put("body", response.body());
+                return json;
+            }catch (Exception e){
+                System.err.println(response.statusCode());
+                System.err.println(response.toString());
+                System.err.println("Invalid: "+ response.body());
+                throw e;
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
 

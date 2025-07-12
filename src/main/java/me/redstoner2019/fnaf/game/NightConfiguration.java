@@ -237,7 +237,7 @@ public class NightConfiguration {
         NightConfiguration configuration = new NightConfiguration(0,0,0,0);
         configuration.setEndlessNight(false);
         configuration.setNightNumber(night);
-        configuration.setNightLength(6*60000);
+        configuration.setNightLength(6*60000); //Length of night in ms
         System.out.println("Getting night " + night);
         System.out.println();
         switch (night) {
@@ -275,7 +275,8 @@ public class NightConfiguration {
                 configuration.setFreddyAI(4);
                 configuration.setBonnieAI(10);
                 configuration.setChicaAI(12);
-                configuration.setFoxyAI(16);
+                configuration.setFoxyAI(6);
+                configuration.setChallenge("night_6");
             }
             case 8 -> {
                 configuration.setFreddyAI(20);

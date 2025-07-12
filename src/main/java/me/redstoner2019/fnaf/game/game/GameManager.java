@@ -164,7 +164,8 @@ public class GameManager {
     }
 
     public void startNight(NightConfiguration nightConfiguration){
-        System.out.println(nightConfiguration);
+        if(nightConfiguration.getNightNumber() != 7) nightConfiguration = NightConfiguration.getNight(nightConfiguration.getNightNumber());
+
         if(nightRunning) return;
         nightStart = System.currentTimeMillis();
         nightRunning = true;
@@ -222,6 +223,39 @@ public class GameManager {
             sounds.get("ventablacklong.ogg").setVolume(1f);
             sounds.get("ventablacklong.ogg").play();
             sounds.get("ventablacklong.ogg").setRepeating(true);
+        }
+
+        System.out.println("Night " + nightNumber);
+        System.out.println(nightConfiguration.convertToJSON().toString(3));
+
+        if(nightNumber == 1 && !fileData.optBoolean("phoneguy_night1", false)) {
+            fileData.put("phoneguy_night1", true);
+            sounds.get("voiceover1.ogg").setVolume(1f);
+            sounds.get("voiceover1.ogg").play();
+        }
+
+        if(nightNumber == 2 && !fileData.optBoolean("phoneguy_night2", false)) {
+            fileData.put("phoneguy_night2", true);
+            sounds.get("voiceover1.ogg").setVolume(1f);
+            sounds.get("voiceover1.ogg").play();
+        }
+
+        if(nightNumber == 3 && !fileData.optBoolean("phoneguy_night3", false)) {
+            fileData.put("phoneguy_night3", true);
+            sounds.get("voiceover1.ogg").setVolume(1f);
+            sounds.get("voiceover1.ogg").play();
+        }
+
+        if(nightNumber == 4 && !fileData.optBoolean("phoneguy_night4", false)) {
+            fileData.put("phoneguy_night4", true);
+            sounds.get("voiceover1.ogg").setVolume(1f);
+            sounds.get("voiceover1.ogg").play();
+        }
+
+        if(nightNumber == 5 && !fileData.optBoolean("phoneguy_night5", false)) {
+            fileData.put("phoneguy_night5", true);
+            sounds.get("voiceover1.ogg").setVolume(1f);
+            sounds.get("voiceover1.ogg").play();
         }
 
         idleUsage = nightConfiguration.getIdleUsage();
@@ -341,7 +375,7 @@ public class GameManager {
                                 if(bonnie.getAI_LEVEL() < random.nextInt(41)) {
                                     Office.getInstance().setLeftDoorAnimatronic(null);
                                     Office.getInstance().setLeftLight(false);
-                                    FNAFMain.sounds.get("Knock2.ogg").play();
+                                    //FNAFMain.sounds.get("Knock2.ogg").play();
                                     bonnie.moveTo(Camera1B.getInstance());
                                 }
                             } else {
@@ -354,6 +388,7 @@ public class GameManager {
                                     CAMERA_DOWN_WAIT.wait();
                                     System.out.println("Cam Down Success");
                                 }
+                                if(!nightRunning || isPowerout) return;
                                 System.out.println("Camera Down Sync done");
                                 chicaThread.interrupt();
                                 foxyThread.interrupt();
@@ -385,7 +420,7 @@ public class GameManager {
                             if(Office.getInstance().isRightDoor()){
                                 if(chica.getAI_LEVEL() < random.nextInt(41)) {
                                     Office.getInstance().setRightDoorAnimatronic(null);
-                                    FNAFMain.sounds.get("Knock2.ogg").play();
+                                    //FNAFMain.sounds.get("Knock2.ogg").play();
                                     Office.getInstance().setRightLight(false);
                                     switch (Distribution.distribution(4, 3, 2, 1)) {
                                         case 0: {
@@ -417,6 +452,7 @@ public class GameManager {
                                 synchronized (CAMERA_DOWN_WAIT) {
                                     CAMERA_DOWN_WAIT.wait();
                                 }
+                                if(!nightRunning || isPowerout) return;
                                 endFreddy();
                                 endBonnie();
                                 endFoxy();
@@ -455,6 +491,12 @@ public class GameManager {
                     else System.out.println("Foxy Movement Failed");
 
                     if(foxy.getStage() == 3){
+
+                        if(!sounds.get("pirate_song.ogg").isPlaying() && new Random().nextBoolean()) {
+                            sounds.get("pirate_song.ogg").setVolume(.35f);
+                            sounds.get("pirate_song.ogg").play();
+                        }
+
                         synchronized (FOXY_RUN_SLEEP) {
                             FOXY_RUN_SLEEP.wait(10000);
                         }
@@ -494,6 +536,7 @@ public class GameManager {
                             power-=foxy.getPowerDrain();
                             foxy.setStage(random.nextInt(2));
                         } else {
+                            if(!nightRunning || isPowerout) return;
                             endFreddy();
                             endBonnie();
                             endChica();
@@ -523,7 +566,7 @@ public class GameManager {
                             System.out.println("SWIRL");
                             if(!sounds.get("swirl_ambience.ogg").isPlaying()) sounds.get("swirl_ambience.ogg").play();
                         }
-                        if(random.nextInt(1200) == 50){
+                        if(random.nextInt(2500) == 50){
                             System.out.println("FOXY DADADUM");
                             if(!sounds.get("pirate_song.ogg").isPlaying()) {
                                 sounds.get("pirate_song.ogg").setVolume(.35f);
@@ -816,7 +859,6 @@ public class GameManager {
                                 System.out.println("Freddy entered the office, waiting " + sleep);
                                 Thread.sleep(sleep);
                                 if(foxy.getCurrentCamera().equals(InOfficeCamera.getInstance())) return;
-                                System.out.println("Freddy jumpscare");
                                 if(nightRunning && isCameraUp) {
                                     sleep = random.nextInt(10000,20000);
                                     System.out.println("Waiting for camera down, max " + sleep);
@@ -1011,7 +1053,14 @@ public class GameManager {
 
     public void sendChallenge(){
         JSONObject request = new JSONObject();
-        request.put("challengeId",fnafMain.challengeIds.get(challenge));
+
+        request.put("game","b98b9e85-6508-b355-f068-d792e1c251c8");
+        request.put("version",FNAFMain.fnafMain.version);
+
+        switch (challenge) {
+            case "night_6" -> request.put("challengeId","5be56dfa-4480-cc1b-1481-f09593adac79");
+            default -> request.put("challengeId","");
+        }
 
         JSONObject data = new JSONObject();
 
@@ -1026,27 +1075,35 @@ public class GameManager {
             case "night_6", "night_4_20", "ventablack" -> {
                 data.put("death",deathTo);
                 data.put("powerLeft",power);
-                data.put("timeLasted",System.currentTimeMillis() - nightStart);
+                //data.put("timeLasted",System.currentTimeMillis() - nightStart);
                 //data.put("foxyAttacks",foxyAttacks);
                 request.put("score",power*100);
             }
         }
+
+        data.put("place",1);
 
         request.put("data",data);
         request.put("score", 0);
 
 
 
+
         HashMap<String, String> headers = new HashMap<>();
         headers.put("Authorization","Bearer " + fnafMain.TOKEN);
 
-        JSONObject result = Requests.request(Method.POST,"https://stats.redstonedev.io/stats/challengeEntry/crate",request, headers);
+        System.out.println(request.toString(3));
+
+        JSONObject result = Requests.request(Method.POST,"https://stats.redstonerdev.io/stats/challengeEntry/create",request, headers);
+
+        System.out.println(result.toString(3));
 
         if(result.getInt("code") == -1 || (result.getInt("code") != 200 && result.getInt("code") != 206)){
             try {
                 File file = new File("waitingToSend.json");
+                boolean exists = file.exists();
                 FileOutputStream fos = new FileOutputStream(file);
-                if(file.exists()) {
+                if(exists) {
                     FileInputStream fis = new FileInputStream(file);
                     JSONArray waiting = new JSONArray(new String(fis.readAllBytes()));
                     waiting.put(request);
@@ -1059,6 +1116,8 @@ public class GameManager {
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
+        } else {
+            System.out.println(result.toString(3));
         }
     }
 
