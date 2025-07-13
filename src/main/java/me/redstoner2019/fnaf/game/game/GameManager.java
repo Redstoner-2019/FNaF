@@ -52,6 +52,7 @@ public class GameManager {
     public boolean ventaNight = false;
     public int nightNumber = 0;
     public boolean isEndless = false;
+    private boolean keysAllowed = false;
 
     private Thread freddyThread = null;
     private Thread foxyThread = null;
@@ -77,6 +78,14 @@ public class GameManager {
 
     private GameManager(){
 
+    }
+
+    public boolean isKeysAllowed() {
+        return keysAllowed;
+    }
+
+    public void setKeysAllowed(boolean keysAllowed) {
+        this.keysAllowed = keysAllowed;
     }
 
     public void endFreddy(){
@@ -166,6 +175,7 @@ public class GameManager {
 
     public void startNight(NightConfiguration nightConfiguration){
         if(nightConfiguration.getNightNumber() != 7) nightConfiguration = NightConfiguration.getNight(nightConfiguration.getNightNumber());
+        if(nightConfiguration.getNightNumber() == 8) setKeysAllowed(true);
 
         if(nightRunning) return;
         nightStart = System.currentTimeMillis();

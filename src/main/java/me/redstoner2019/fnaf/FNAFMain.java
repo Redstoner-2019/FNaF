@@ -106,7 +106,7 @@ public class FNAFMain {
     private TextRenderer textRenderer;
     private KeyboardInputHandler inputHandler = new KeyboardInputHandler();
 
-    public String version = "1.5.2";
+    public String version = "1.5.4";
     public int versionNumber = 0;
     public String gameID = "";
     public HashMap<String, String> challengeIds = new HashMap<>();
@@ -359,7 +359,7 @@ public class FNAFMain {
                 inputHandler.invoke(window,key,scancode,action,mods);
 
                 if(menu == Menu.OFFICE){
-                    if ((key == GLFW_KEY_SPACE || key == GLFW_KEY_S) && action == GLFW_RELEASE) {
+                    if ((key == GLFW_KEY_SPACE || key == GLFW_KEY_S) && action == GLFW_RELEASE && gameManager.isKeysAllowed()) {
                         Thread t = new Thread(new Runnable() {
                             @Override
                             public void run() {
@@ -387,7 +387,7 @@ public class FNAFMain {
 
                     Office office = Office.getInstance();
 
-                    if(key == GLFW_KEY_A && action == GLFW_RELEASE){
+                    if(key == GLFW_KEY_A && action == GLFW_RELEASE && gameManager.isKeysAllowed()){
                         if(!gameManager.isPowerout()) {
                             if(Bonnie.getInstance().getCurrentCamera().equals(InOfficeCamera.getInstance())){
                                 sounds.get("error.ogg").play();
@@ -412,7 +412,7 @@ public class FNAFMain {
                         }
                     }
 
-                    if(key == GLFW_KEY_D && action == GLFW_RELEASE){
+                    if(key == GLFW_KEY_D && action == GLFW_RELEASE && gameManager.isKeysAllowed()){
                         if(!gameManager.isPowerout()) {
                             if(Chica.getInstance().getCurrentCamera().equals(InOfficeCamera.getInstance())){
                                 sounds.get("error.ogg").play();
@@ -437,7 +437,7 @@ public class FNAFMain {
                         }
                     }
 
-                    if(key == GLFW_KEY_Q && action == GLFW_RELEASE){
+                    if(key == GLFW_KEY_Q && action == GLFW_RELEASE && gameManager.isKeysAllowed()){
                         if(!gameManager.isPowerout()) {
                             if(Bonnie.getInstance().getCurrentCamera().equals(InOfficeCamera.getInstance())){
                                 sounds.get("error.ogg").play();
@@ -460,7 +460,7 @@ public class FNAFMain {
                         }
                     }
 
-                    if(key == GLFW_KEY_E && action == GLFW_RELEASE){
+                    if(key == GLFW_KEY_E && action == GLFW_RELEASE && gameManager.isKeysAllowed()){
                         if(!gameManager.isPowerout()) {
                             if(Chica.getInstance().getCurrentCamera().equals(InOfficeCamera.getInstance())){
                                 sounds.get("error.ogg").play();
