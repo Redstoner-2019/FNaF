@@ -11,6 +11,7 @@ import me.redstoner2019.fnaf.game.animatronics.Chica;
 import me.redstoner2019.fnaf.game.animatronics.Foxy;
 import me.redstoner2019.fnaf.game.animatronics.Freddy;
 import me.redstoner2019.fnaf.game.cameras.*;
+import me.redstoner2019.fnaf.game.rendering.HallucinationRenderer;
 import me.redstoner2019.util.http.Method;
 import me.redstoner2019.util.http.Requests;
 import org.json.JSONArray;
@@ -572,6 +573,9 @@ public class GameManager {
                                 sounds.get("pirate_song.ogg").setVolume(.35f);
                                 sounds.get("pirate_song.ogg").play();
                             }
+                        }
+                        if(random.nextInt(3000) == 50){
+                            HallucinationRenderer.start();
                         }
                     } catch (InterruptedException e) {
                         e.printStackTrace();

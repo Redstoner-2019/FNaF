@@ -2,6 +2,7 @@ package me.redstoner2019.fnaf;
 
 import me.redstoner2019.fnaf.game.NightConfiguration;
 import me.redstoner2019.fnaf.game.game.Notification;
+import me.redstoner2019.fnaf.game.rendering.HallucinationRenderer;
 import me.redstoner2019.fnaf.game.stats.StatisticClient;
 import me.redstoner2019.graphics.font.TextRenderer;
 import me.redstoner2019.graphics.general.*;
@@ -538,10 +539,13 @@ public class FNAFMain {
                 if (key == GLFW_KEY_F1 && action == GLFW_RELEASE && !loggedIn) {
                     menu = Menu.OFFICE;
                 }
+                if (key == GLFW_KEY_F4 && action == GLFW_RELEASE && !loggedIn) {
+                    //HallucinationRenderer.start();
+                }
                 if (key == GLFW_KEY_F2 && action == GLFW_RELEASE && !loggedIn) {
                     gameManager.setNightStart(System.currentTimeMillis() - gameManager.getNIGHT_LENGTH() - 100);
                 }
-                if (key == GLFW_KEY_F3 && action == GLFW_RELEASE && !loggedIn) {
+                if (key == GLFW_KEY_F3 && action == GLFW_RELEASE ) {
                     showDebug = !showDebug;
                 }
                 if (key == GLFW_KEY_F11 && action == GLFW_RELEASE) {
@@ -1341,6 +1345,7 @@ public class FNAFMain {
              */
 
             if(System.currentTimeMillis() - lastRandomChange >= 10){
+                HallucinationRenderer.tick();
                 lastRandomChange = System.currentTimeMillis();
                 if(mainmenuFreddyTwitching){
                     if(mainMenuFreddyTwitchStage > 3){
@@ -1396,6 +1401,17 @@ public class FNAFMain {
             /**
              * Updating
              */
+
+            //Sound garble = sounds.getOrDefault("garble.ogg", null);
+            //if(!garble.isPlaying() && HallucinationRenderer.isActive()) garble.play();
+            //else garble.stop();
+
+            if(HallucinationRenderer.isActive()){
+                Sound garble = sounds.getOrDefault("garble.ogg", null);
+                if(garble != null){
+                    garble.play();
+                }
+            }
 
             if(Bonnie.getInstance().getCurrentCamera().equals(Camera2B.getInstance()) && nightConfiguration.getNightNumber() >= 4 && menu == Menu.CAMERAS && gameManager.getCamera().equals(Camera2B.getInstance())){
                 Sound garble = sounds.getOrDefault("garble.ogg", null);
@@ -1465,6 +1481,8 @@ public class FNAFMain {
                             menuSelection = selection;
                             sounds.get("blip.ogg").stop();
                             sounds.get("blip.ogg").play();
+                            sounds.get("garble.ogg").stop();
+                            sounds.get("garble.ogg").play();
                         }
                     }
                     case OFFICE -> {
@@ -1774,6 +1792,8 @@ public class FNAFMain {
 
                     renderer.renderTexture((scroll * 0.25f)+1.1f,-0.385f,w*0.6f,h,textures.get(textureRight),true,false,0);
                     renderer.renderTexture((scroll * 0.25f)-1.25f,-0.385f,w*0.6f,h,textures.get(textureLeft),true,false,0);
+
+                    HallucinationRenderer.render();
 
                     if(between(0,10,cameraStage)) renderer.renderTexture(-1,-1,2f,2,textures.get("camera.flip." + cameraStage + ".png"),true,false,0);
 
@@ -2330,30 +2350,37 @@ public class FNAFMain {
         }
     }
 
+    public File getDirectory(){
+        File homeDirectory;
+
+        String appName = "fnaf";
+
+        String os = System.getProperty("os.name").toLowerCase();
+        String userHome = System.getProperty("user.home");
+
+        if (os.contains("win")) {
+            // Windows: Use %APPDATA%
+            String appData = System.getenv("APPDATA");
+            homeDirectory = new File(appData != null ? appData + "\\" + appName : userHome + "\\AppData\\Roaming\\" + appName);
+        } else if (os.contains("mac")) {
+            // macOS: Use ~/Library/Application Support
+            homeDirectory = new File(userHome + "/Library/Application Support/" + appName);
+        } else {
+            // Linux/Unix: Use ~/.local/share
+            homeDirectory = new File(userHome + "/.local/share/" + appName);
+        }
+
+        return homeDirectory;
+    }
+
     public void load(){
         soundManager = SoundManager.getInstance();
         try {
             File data = new File("data.json");
-            File homeDirectory;
-
-            String appName = "fnaf";
-
-            String os = System.getProperty("os.name").toLowerCase();
-            String userHome = System.getProperty("user.home");
-
-            if (os.contains("win")) {
-                // Windows: Use %APPDATA%
-                String appData = System.getenv("APPDATA");
-                homeDirectory = new File(appData != null ? appData + "\\" + appName : userHome + "\\AppData\\Roaming\\" + appName);
-            } else if (os.contains("mac")) {
-                // macOS: Use ~/Library/Application Support
-                homeDirectory = new File(userHome + "/Library/Application Support/" + appName);
-            } else {
-                // Linux/Unix: Use ~/.local/share
-                homeDirectory = new File(userHome + "/.local/share/" + appName);
-            }
+            File homeDirectory = getDirectory();
 
             if(!homeDirectory.exists()){
+
                 homeDirectory.mkdirs();
             }
 
@@ -2426,8 +2453,10 @@ public class FNAFMain {
     }
 
     public void save(){
+        System.out.println("save");
         try {
-            File data = new File("data.json");
+            File homeDirectory = getDirectory();
+            File data = new File(homeDirectory.getAbsolutePath() + "/data.json");
             if(!data.exists()) {
                 data.createNewFile();
                 JSONObject saveData = new JSONObject();
