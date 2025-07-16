@@ -106,7 +106,7 @@ public class FNAFMain {
     private TextRenderer textRenderer;
     private KeyboardInputHandler inputHandler = new KeyboardInputHandler();
 
-    public String version = "1.5.5";
+    public String version = "1.5.6";
     public int versionNumber = 0;
     public String gameID = "";
     public HashMap<String, String> challengeIds = new HashMap<>();

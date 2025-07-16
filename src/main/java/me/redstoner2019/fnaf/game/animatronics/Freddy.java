@@ -135,6 +135,9 @@ public class Freddy extends Animatronic{
                 else FNAFMain.sounds.get("giggle.ogg.ogx").setAngle(10,3f);
             }
         }
+
+        if(!giggle) FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").play();
+        else FNAFMain.sounds.get("giggle.ogg.ogx").setAngle(10,3f);
     }
 
     public static Freddy getInstance() {
