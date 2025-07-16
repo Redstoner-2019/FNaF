@@ -106,7 +106,7 @@ public class FNAFMain {
     private TextRenderer textRenderer;
     private KeyboardInputHandler inputHandler = new KeyboardInputHandler();
 
-    public String version = "1.5.4";
+    public String version = "1.5.5";
     public int versionNumber = 0;
     public String gameID = "";
     public HashMap<String, String> challengeIds = new HashMap<>();
@@ -304,25 +304,29 @@ public class FNAFMain {
         File toSend = new File("waitingToSend.json");
 
         if(toSend.exists()){
-            FileInputStream fis = new FileInputStream(toSend);
-            JSONArray waitingToSend = new JSONArray(new String(fis.readAllBytes()));
-            fis.close();
+            try{
+                FileInputStream fis = new FileInputStream(toSend);
+                JSONArray waitingToSend = new JSONArray(new String(fis.readAllBytes()));
+                fis.close();
 
-            for (int i = 0; i < waitingToSend.length(); i++) {
-                JSONObject request = waitingToSend.getJSONObject(i);
+                for (int i = 0; i < waitingToSend.length(); i++) {
+                    JSONObject request = waitingToSend.getJSONObject(i);
 
-                HashMap<String, String> headers = new HashMap<>();
-                headers.put("Authorization","Bearer " + fnafMain.TOKEN);
+                    HashMap<String, String> headers = new HashMap<>();
+                    headers.put("Authorization","Bearer " + fnafMain.TOKEN);
 
-                JSONObject result = Requests.request(Method.POST,"https://stats.redstonerdev.io/stats/challengeEntry/create",request, headers);
+                    JSONObject result = Requests.request(Method.POST,"https://stats.redstonerdev.io/stats/challengeEntry/create",request, headers);
 
-                if(result.getInt("code") == -1 || (result.getInt("code") != 200 && result.getInt("code") != 206)){
-                    break;
+                    if(result.getInt("code") == -1 || (result.getInt("code") != 200 && result.getInt("code") != 206)){
+                        break;
+                    }
+
+                    if(i == waitingToSend.length() - 1){
+                        toSend.delete();
+                    }
                 }
-
-                if(i == waitingToSend.length() - 1){
-                    toSend.delete();
-                }
+            }catch (Exception e){
+                e.printStackTrace();
             }
         }
 
@@ -1306,6 +1310,16 @@ public class FNAFMain {
         if(ventaBlackNightUnlocked) {
             mainmenuSong = "mainmenuEerie.ogg";
             sounds.get(mainmenuSong).setVolume(2);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            sounds.get("giggle.ogg.ogx").play();
+            renderer.renderTexture(-1,-1,2,2,textures.get("white.png"),true,false,0, Color.BLACK);
+            glfwSwapBuffers(window);
+        }
+
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
         sounds.get("Static2.ogg").play();

@@ -107,25 +107,34 @@ public class Freddy extends Animatronic{
             FNAFMain.sounds.get("camera_garble.ogg").play();
         }
         int laugh = new Random().nextInt(1,4);
+        boolean giggle = new Random().nextInt(75) == 5;
         FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").stop();
         switch (getCurrentCamera().getCameraName()) {
             case "Camera1B" -> {
-                FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(10,3f);
+                if(!giggle) FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(10,3f);
+                else FNAFMain.sounds.get("giggle.ogg.ogx").setAngle(10,3f);
             }
             case "Camera7" -> {
-                FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(20,2.5f);
+                if(!giggle) FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(20,2.5f);
+                else FNAFMain.sounds.get("giggle.ogg.ogx").setAngle(10,3f);
             }
             case "Camera6" -> {
-                FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(45,2f);
+                if(!giggle) FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(45,2f);
+                else FNAFMain.sounds.get("giggle.ogg.ogx").setAngle(10,3f);
             }
             case "Camera4A" -> {
-                FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(45,1.5f);
+                if(!giggle) FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(45,1.5f);
+                else FNAFMain.sounds.get("giggle.ogg.ogx").setAngle(10,3f);
             }
             case "Camera4B" -> {
-                FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(65,1);
+                if(!giggle) FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").setAngle(65,1);
+                else FNAFMain.sounds.get("giggle.ogg.ogx").setAngle(10,3f);
+            }
+            default -> {
+                if(!giggle) FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").play();
+                else FNAFMain.sounds.get("giggle.ogg.ogx").setAngle(10,3f);
             }
         }
-        FNAFMain.sounds.get("freddy_laugh_" + laugh + ".oga").play();
     }
 
     public static Freddy getInstance() {

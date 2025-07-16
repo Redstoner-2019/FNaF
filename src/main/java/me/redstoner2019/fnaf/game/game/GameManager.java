@@ -75,6 +75,7 @@ public class GameManager {
     private String deathTo = "Survived";
     private int timesLeftDoorClosed = 0;
     private int timesRightDoorClosed = 0;
+    private int hallucinations = 0;
 
     private GameManager(){
 
@@ -186,6 +187,7 @@ public class GameManager {
         isBlackout = false;
         isPowerout = false;
         nightNumber = nightConfiguration.getNightNumber();
+        this.hallucinations = 0;
         final int[] night = {nightConfiguration.getNightNumber()};
 
         System.out.println("Starting night " + nightConfiguration.getNightNumber());
@@ -193,6 +195,11 @@ public class GameManager {
         if(nightConfiguration.getNightNumber() == 7){
             customNight = true;
         }
+
+        if(freddyThread != null && !freddyThread.isInterrupted()) freddyThread.interrupt();
+        if(bonnieThread != null && !bonnieThread.isInterrupted()) bonnieThread.interrupt();
+        if(chicaThread != null && !chicaThread.isInterrupted()) chicaThread.interrupt();
+        if(foxyThread != null && !foxyThread.isInterrupted()) foxyThread.interrupt();
 
         isEndless = nightConfiguration.isEndlessNight();
 
@@ -574,18 +581,17 @@ public class GameManager {
                         Thread.sleep(50);
                         if(isPowerout) break;
                         if(random.nextInt(600) == 50){
-                            System.out.println("SWIRL");
                             if(!sounds.get("swirl_ambience.ogg").isPlaying()) sounds.get("swirl_ambience.ogg").play();
                         }
                         if(random.nextInt(2500) == 50){
-                            System.out.println("FOXY DADADUM");
                             if(!sounds.get("pirate_song.ogg").isPlaying()) {
                                 sounds.get("pirate_song.ogg").setVolume(.35f);
                                 sounds.get("pirate_song.ogg").play();
                             }
                         }
-                        if(random.nextInt(3000) == 50){
+                        if(random.nextInt(6000) == 50 && hallucinations < 2){
                             HallucinationRenderer.start();
+                            hallucinations++;
                         }
                     } catch (InterruptedException e) {
                         e.printStackTrace();

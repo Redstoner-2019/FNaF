@@ -1,5 +1,5 @@
 English:
-- Added Key Input for Night 8
+- Added occasional giggle sound effect for Freddy and lowered probability of in-game hallucinations.
 
 Deutsch:
-- Key Input für Nacht 8 eingefügt
+- Gelegentliches Kichern bei Freddy hinzugefügt und Wahrscheinlichkeit der Halluzinationen im Spiel verringert.
