@@ -1140,6 +1140,7 @@ public class GameManager {
 
         switch (challenge) {
             case "night_6" -> request.put("challengeId","5be56dfa-4480-cc1b-1481-f09593adac79");
+            case "ventablack" -> request.put("challengeId","fa2f2058-db97-2e52-509a-64976e83ec73");
             default -> request.put("challengeId","");
         }
 

@@ -307,7 +307,8 @@ public class NightConfiguration {
                 configuration.setChicaMovementSpeed(3980);
                 configuration.setFoxyMovementSpeed(4010);
 
-                configuration.setGoldenFreddyChance(0.2);
+                configuration.setGoldenFreddyChance(0);
+                configuration.setChallenge("ventablack");
             }
             default -> {
                 configuration.setFreddyAI(2);

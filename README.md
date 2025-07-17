@@ -1,5 +1,5 @@
 English:
-- Fixed Freddys laughing
+- Challenge Fixes
 
 Deutsch:
-- Freddys lachen gefixt
+- Challenge Fixes
