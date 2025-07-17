@@ -14,5 +14,6 @@ public enum Menu {
     ENDING_WEEK_OVERTIME,
     ENDING_FIRED,
     ENDING_VENTA,
-    ONLINE
+    ONLINE,
+    CUSTOM
 }

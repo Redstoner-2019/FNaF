@@ -25,6 +25,7 @@ public class NightConfiguration {
     private int nightNumber = 1;
     private float idleUsage = .0025f;
     private String challenge = null;
+    private double goldenFreddyChance = 0;
 
     public void reset(){
         freddyMovementSpeed = 3820;
@@ -215,6 +216,14 @@ public class NightConfiguration {
         this.idleUsage = idleUsage;
     }
 
+    public double getGoldenFreddyChance() {
+        return goldenFreddyChance;
+    }
+
+    public void setGoldenFreddyChance(double goldenFreddyChance) {
+        this.goldenFreddyChance = goldenFreddyChance;
+    }
+
     public JSONObject convertToJSON(){
         JSONObject json = new JSONObject();
         json.put("freddyAI", freddyAI);
@@ -246,30 +255,35 @@ public class NightConfiguration {
                 configuration.setBonnieAI(0);
                 configuration.setChicaAI(0);
                 configuration.setFoxyAI(0);
+                configuration.setGoldenFreddyChance(0);
             }
             case 2 -> {
                 configuration.setFreddyAI(0);
                 configuration.setBonnieAI(3);
                 configuration.setChicaAI(1);
                 configuration.setFoxyAI(1);
+                configuration.setGoldenFreddyChance(0);
             }
             case 3 -> {
                 configuration.setFreddyAI(1);
                 configuration.setBonnieAI(0);
                 configuration.setChicaAI(5);
                 configuration.setFoxyAI(2);
+                configuration.setGoldenFreddyChance(0);
             }
             case 4 -> {
                 configuration.setFreddyAI(Math.random() > 0.5 ? 1 : 2);
                 configuration.setBonnieAI(2); //5
                 configuration.setChicaAI(4); //6
                 configuration.setFoxyAI(6); //8
+                configuration.setGoldenFreddyChance(0.001);
             }
             case 5 -> {
                 configuration.setFreddyAI(3);
                 configuration.setBonnieAI(5);
                 configuration.setChicaAI(7);
                 configuration.setFoxyAI(5);
+                configuration.setGoldenFreddyChance(0.002);
             }
             case 6 -> {
                 configuration.setFreddyAI(4);
@@ -277,6 +291,7 @@ public class NightConfiguration {
                 configuration.setChicaAI(12);
                 configuration.setFoxyAI(6);
                 configuration.setChallenge("night_6");
+                configuration.setGoldenFreddyChance(0.005);
             }
             case 8 -> {
                 configuration.setFreddyAI(20);
@@ -291,12 +306,15 @@ public class NightConfiguration {
                 configuration.setBonnieMovementSpeed(3970);
                 configuration.setChicaMovementSpeed(3980);
                 configuration.setFoxyMovementSpeed(4010);
+
+                configuration.setGoldenFreddyChance(0.2);
             }
             default -> {
                 configuration.setFreddyAI(2);
                 configuration.setBonnieAI(2);
                 configuration.setChicaAI(2);
                 configuration.setFoxyAI(2);
+                configuration.setGoldenFreddyChance(0);
             }
         }
         return configuration;

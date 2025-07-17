@@ -1,5 +1,6 @@
 package me.redstoner2019.fnaf;
 
+import me.redstoner2019.fnaf.game.Jumpscare;
 import me.redstoner2019.fnaf.game.NightConfiguration;
 import me.redstoner2019.fnaf.game.game.Notification;
 import me.redstoner2019.fnaf.game.rendering.HallucinationRenderer;
@@ -45,7 +46,7 @@ import static org.lwjgl.system.MemoryUtil.memAllocInt;
 
 public class FNAFMain {
 
-    private long window;
+    public long window;
     private Texture loadingTexture;
     public static int width = 1280;
     public static int height = 720;
@@ -561,41 +562,6 @@ public class FNAFMain {
                 if (key == GLFW_KEY_KP_1 && action == GLFW_RELEASE && !loggedIn) {
                     gameManager.setPower(100);
                 }
-                if (key == GLFW_KEY_J && action == GLFW_RELEASE && !loggedIn) {
-                    switch (random.nextInt(5)) {
-                        case 0 : {
-                            jumpscare = "bonnie.jump.";
-                            jumpscareFrame = 0;
-                            jumpscareLength = 10;
-                            break;
-                        }
-                        case 1 : {
-                            jumpscare = "chica.jump.";
-                            jumpscareFrame = 0;
-                            jumpscareLength = 15;
-                            break;
-                        }
-                        case 2 : {
-                            jumpscare = "freddy.jump.";
-                            jumpscareFrame = 0;
-                            jumpscareLength = 27;
-                            break;
-                        }
-                        case 3 : {
-                            jumpscare = "freddy.blackout.";
-                            jumpscareFrame = 0;
-                            jumpscareLength = 20;
-                            break;
-                        }
-                        case 4 : {
-                            jumpscare = "foxy.enter.";
-                            jumpscareFrame = 0;
-                            jumpscareLength = 20;
-                            break;
-                        }
-                    }
-                    triggerJumpScare(jumpscare,jumpscareLength,false);
-                }
             }
         });
 
@@ -1078,6 +1044,7 @@ public class FNAFMain {
                             sounds.get("blip.ogg").play();
                             nightConfiguration.setFoxyMovementSpeed(Math.max(100, Math.min(nightConfiguration.getFoxyMovementSpeed()-adder,9990)));
                         }
+
                         if(between(-.55,-.65,mx)){
                             sounds.get("blip.ogg").stop();
                             sounds.get("blip.ogg").play();
@@ -1097,6 +1064,27 @@ public class FNAFMain {
                             sounds.get("blip.ogg").stop();
                             sounds.get("blip.ogg").play();
                             nightConfiguration.setFoxyMovementSpeed(Math.max(100, Math.min(nightConfiguration.getFoxyMovementSpeed()+adder,9990)));
+                        }
+
+                        if(between(-.85,-.55,mx)){
+                            sounds.get("blip.ogg").stop();
+                            sounds.get("blip.ogg").play();
+                            nightConfiguration.setFreddyMovementSpeed(3820);
+                        }
+                        if(between(-.35,-.15,mx)){
+                            sounds.get("blip.ogg").stop();
+                            sounds.get("blip.ogg").play();
+                            nightConfiguration.setBonnieMovementSpeed(4970);
+                        }
+                        if(between(.15,.45,mx)){
+                            sounds.get("blip.ogg").stop();
+                            sounds.get("blip.ogg").play();
+                            nightConfiguration.setChicaMovementSpeed(4980);
+                        }
+                        if(between(.65,.95,mx)){
+                            sounds.get("blip.ogg").stop();
+                            sounds.get("blip.ogg").play();
+                            nightConfiguration.setFoxyMovementSpeed(5010);
                         }
                     }
 
@@ -1755,7 +1743,6 @@ public class FNAFMain {
                         renderer.renderTexture(0.75f + (scroll * 0.25f), -1, 0.4f, 2.1f, textures.get("right.door." + office.getRightDoorAnimation() + ".png"), true, false, 0);
                     }
 
-                    renderer.renderTexture(-0.5f,-.9f,1,.15f,textures.get("camera.button.png"),true,false,0);
                     float w0 = .17f;
                     float w = w0*1.25f;
                     float h = w0*textures.get("fan.1.png").getAspectRatio();
@@ -1803,6 +1790,11 @@ public class FNAFMain {
                             textureRight = "buttons.right.png";
                         }
                     }
+
+                    if(gameManager.isGoldenFreddy()) renderer.renderTexture((scroll * 0.25f) - 0.03f,-1f,0.8f,1,textures.get("golden.freddy.office.png"),true,false,0);
+
+
+                    renderer.renderTexture(-0.5f,-.9f,1,.15f,textures.get("camera.button.png"),true,false,0);
 
                     renderer.renderTexture((scroll * 0.25f)+1.1f,-0.385f,w*0.6f,h,textures.get(textureRight),true,false,0);
                     renderer.renderTexture((scroll * 0.25f)-1.25f,-0.385f,w*0.6f,h,textures.get(textureLeft),true,false,0);
@@ -2150,7 +2142,13 @@ public class FNAFMain {
                     if(gameManager.getCamera().equals(Camera2A.getInstance())){
                         renderer.renderTexture(-1.25f + (scroll * 0.25f),-1,2.5f,2,textures.get(jumpscare + jumpscareFrame + ".png"),true,false,0);
                     }
-                } else renderer.renderTexture(-1.25f + (scroll * 0.25f),-1,2.5f,2,textures.get(jumpscare + jumpscareFrame + ".png"),true,false,0);
+                } else if(jumpscareFrame == -1){
+                    if(jumpscare.equals("golden.freddy.png")){
+                        Jumpscare.playGoldenFreddyJumpscare();
+                    }
+                    else renderer.renderTexture(-1.25f + (scroll * 0.25f),-1,2.5f,2,textures.get(jumpscare),true,false,0);
+                }
+                else renderer.renderTexture(-1.25f + (scroll * 0.25f),-1,2.5f,2,textures.get(jumpscare + jumpscareFrame + ".png"),true,false,0);
             }
 
             if(showDebug){
@@ -2244,17 +2242,27 @@ public class FNAFMain {
     }
 
     public void triggerJumpScare(final String jumpscare, int frames, boolean endGame){
+        triggerJumpScare(jumpscare,frames,endGame,false);
+    }
+
+    public void triggerJumpScare(final String jumpscare, int frames, boolean endGame, boolean isStatic){
+        if(isStatic) jumpscareFrame = -1;
         this.nightEndTime = System.currentTimeMillis();
         this.jumpscare = jumpscare;
         FNAFMain m = this;
-        if(endGame) sounds.get("scream.ogg").play();
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
+                if(endGame && frames > 0) sounds.get("scream.ogg").play();
                 for (int i = 0; i <= frames; i++) {
                     if(jumpscare.contains("foxy") || jumpscare.contains("bonnie")) scroll = 1;
                     else scroll = 0;
-                    jumpscareFrame = i;
+                    if(!isStatic) {
+                        jumpscareFrame = i;
+                        System.out.println(jumpscareFrame);
+                    } else {
+                        System.out.println("Non static frame " + jumpscareFrame);
+                    }
 
                     try {
                         Thread.sleep(32);
@@ -2268,14 +2276,14 @@ public class FNAFMain {
                     menu = Menu.NOISE;
                     sounds.get("humm.oga").play();
                     try {
-                        Thread.sleep(10000);
+                        Thread.sleep(5000);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
                     sounds.get("humm.oga").stop();
                     menu = Menu.NIGHT_END_DEATH;
                     try {
-                        Thread.sleep(10000);
+                        Thread.sleep(5000);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }

@@ -1,11 +1,11 @@
 package me.redstoner2019.graphics.general;
 
-import me.redstoner2019.graphics.font.TextRenderer;
 import org.lwjgl.opengl.*;
 
 import java.awt.*;
 import java.util.Random;
 
+import static org.lwjgl.glfw.GLFW.glfwGetTime;
 import static org.lwjgl.opengl.GL11.*;
 
 public class Renderer {
@@ -15,6 +15,8 @@ public class Renderer {
     private int height;
 
     public int vao;
+    private ShaderProgram activeShader;
+    private final ShaderProgram vhsShader;
     private final ShaderProgram renderShader;
     private ShaderProgram[] postProcessingShaders;
 
@@ -29,6 +31,29 @@ public class Renderer {
         renderShader.attachShader(vertexShader);
         renderShader.attachShader(fragmentShader);
         renderShader.link();
+
+        vertexShader = Shader.loadShader(GL20.GL_VERTEX_SHADER, "shader/vhs.vert");
+        fragmentShader = Shader.loadShader(GL20.GL_FRAGMENT_SHADER, "shader/vhs.frag");
+
+        vhsShader = new ShaderProgram();
+        vhsShader.attachShader(vertexShader);
+        vhsShader.attachShader(fragmentShader);
+        vhsShader.link();
+
+        activeShader = renderShader;
+    }
+
+    public ShaderProgram getVhsShader() {
+        return vhsShader;
+    }
+
+
+    public ShaderProgram getRenderShader() {
+        return renderShader;
+    }
+
+    public void setActiveShader(ShaderProgram activeShader) {
+        this.activeShader = activeShader;
     }
 
     public static Renderer getInstance() {
@@ -39,7 +64,7 @@ public class Renderer {
     }
 
     public int getShaderId(){
-        return renderShader.id;
+        return activeShader.id;
     }
 
     public float getAspectRatio(){
@@ -70,20 +95,20 @@ public class Renderer {
         this.postProcessingShaders = postProcessingShaders;
     }
 
-    public void renderTexture(float x, float y, float w, float h, float sectionX, float sectionY, float sectionW, float sectionH, Texture texture, boolean overrideAspectRatio, Color color, boolean hasNoise, float noiseStrength){
+    public void renderTexture(float x, float y, float w, float h, float sectionX, float sectionY, float sectionW, float sectionH, Texture texture, boolean overrideAspectRatio, Color color, boolean hasNoise, float noiseStrength, int vao){
         if(texture == null) {
             System.err.println("Texture is null.");
             throw new RuntimeException(new NullPointerException("Texture is null."));
         }
-        renderTexture(x,y,w,h,sectionX,sectionY,sectionW,sectionH,texture.getId(),color,hasNoise,noiseStrength);
+        renderTexture(x,y,w,h,sectionX,sectionY,sectionW,sectionH,texture.getId(),color,hasNoise,noiseStrength, vao);
     }
 
-    public void renderTexture(float x, float y, float w, float h, float sectionX, float sectionY, float sectionW, float sectionH, int texture, boolean overrideAspectRatio, Color color, boolean hasNoise, float noiseStrength){
-        renderTexture(x,y,w,h,sectionX,sectionY,sectionW,sectionH,texture,color,hasNoise,noiseStrength);
+    public void renderTexture(float x, float y, float w, float h, float sectionX, float sectionY, float sectionW, float sectionH, int texture, boolean overrideAspectRatio, Color color, boolean hasNoise, float noiseStrength, int vao){
+        renderTexture(x,y,w,h,sectionX,sectionY,sectionW,sectionH,texture,color,hasNoise,noiseStrength, vao);
     }
 
-    public void renderTexture(float x, float y, float w, float h,float sectionX, float sectionY, float sectionW, float sectionH, int texture, Color color, boolean hasNoise, float noiseStrength){
-        GL20.glUseProgram(renderShader.id);
+    public void renderTexture(float x, float y, float w, float h,float sectionX, float sectionY, float sectionW, float sectionH, int texture, Color color, boolean hasNoise, float noiseStrength, int vao){
+        GL20.glUseProgram(activeShader.id);
 
         glEnable(GL_BLEND);
 
@@ -92,31 +117,34 @@ public class Renderer {
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
 
-        int textureUniformLocation = GL20.glGetUniformLocation(renderShader.id, "textureSampler");
+        int textureUniformLocation = GL20.glGetUniformLocation(activeShader.id, "textureSampler");
         GL20.glUniform1i(textureUniformLocation, 0);
 
-        int texOffsetLocation = GL20.glGetUniformLocation(renderShader.id, "texOffset");
+        int texOffsetLocation = GL20.glGetUniformLocation(activeShader.id, "texOffset");
         GL20.glUniform2f(texOffsetLocation, sectionX, sectionY);
 
-        int texScaleLocation = GL20.glGetUniformLocation(renderShader.id, "texScale");
+        int texScaleLocation = GL20.glGetUniformLocation(activeShader.id, "texScale");
         GL20.glUniform2f(texScaleLocation, sectionW, sectionH);
 
-        int offsetLocation = GL20.glGetUniformLocation(renderShader.id, "offset");
+        int offsetLocation = GL20.glGetUniformLocation(activeShader.id, "offset");
         GL20.glUniform2f(offsetLocation, x + (w/2), y + (h/2));
 
-        int offsetScaleLocation = GL20.glGetUniformLocation(renderShader.id, "offsetScale");
+        int offsetScaleLocation = GL20.glGetUniformLocation(activeShader.id, "offsetScale");
         GL20.glUniform2f(offsetScaleLocation, w, h);
 
-        int colorLocation = GL20.glGetUniformLocation(renderShader.id, "color");
+        int colorLocation = GL20.glGetUniformLocation(activeShader.id, "color");
         GL20.glUniform4f(colorLocation, color.getRed()/255f, color.getGreen()/255f, color.getBlue()/255f, color.getAlpha()/255f);
 
-        int seedLocation = GL20.glGetUniformLocation(renderShader.id, "seed");
+        int seedLocation = GL20.glGetUniformLocation(activeShader.id, "seed");
         GL20.glUniform1f(seedLocation, new Random().nextFloat());
+
+        int timeLocation = GL20.glGetUniformLocation(activeShader.id, "iTime");
+        GL20.glUniform1f(timeLocation, (float) glfwGetTime());
 
         float f;
         if(!hasNoise) f = 0;
         else f = noiseStrength;
-        int noiseStrengthLocation = GL20.glGetUniformLocation(renderShader.id, "noiseLevel");
+        int noiseStrengthLocation = GL20.glGetUniformLocation(activeShader.id, "noiseLevel");
         GL20.glUniform1f(noiseStrengthLocation, f);
 
         GL30.glBindVertexArray(vao);
@@ -131,31 +159,34 @@ public class Renderer {
      */
 
     public void renderTexture(float x, float y, float w, float h, Texture texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength){
-        renderTexture(x,y,w,h,0,0,1,1, texture,overrideAspectRatio, Color.WHITE, hasNoise,noiseStrength);
+        renderTexture(x,y,w,h,0,0,1,1, texture,overrideAspectRatio, Color.WHITE, hasNoise,noiseStrength, vao);
+    }
+    public void renderTexture(float x, float y, float w, float h, Texture texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength, int vao){
+        renderTexture(x,y,w,h,0,0,1,1, texture,overrideAspectRatio, Color.WHITE, hasNoise,noiseStrength, vao);
     }
     public void renderTexture(float x, float y, float w, float h, Texture texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength, Color c){
-        renderTexture(x,y,w,h,0,0,1,1, texture,overrideAspectRatio, c, hasNoise,noiseStrength);
+        renderTexture(x,y,w,h,0,0,1,1, texture,overrideAspectRatio, c, hasNoise,noiseStrength, vao);
     }
 
     public void renderTexture(float x, float y, float w, float h, int texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength){
-        renderTexture(x,y,w,h,0,0,1,1, texture,overrideAspectRatio, Color.WHITE, hasNoise,noiseStrength);
+        renderTexture(x,y,w,h,0,0,1,1, texture,overrideAspectRatio, Color.WHITE, hasNoise,noiseStrength, vao);
     }
     public void renderTexture(float x, float y, float w, float h, int texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength, Color c){
-        renderTexture(x,y,w,h,0,0,1,1, texture,overrideAspectRatio, c, hasNoise,noiseStrength);
+        renderTexture(x,y,w,h,0,0,1,1, texture,overrideAspectRatio, c, hasNoise,noiseStrength, vao);
     }
 
     public void renderTextureBounds(float x0, float y0, float x1, float y1, Texture texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength){
-        renderTexture(x0,y0,x1-x0,y1-y0,0,0,1,1, texture,overrideAspectRatio, Color.WHITE, hasNoise,noiseStrength);
+        renderTexture(x0,y0,x1-x0,y1-y0,0,0,1,1, texture,overrideAspectRatio, Color.WHITE, hasNoise,noiseStrength, vao);
     }
     public void renderTextureBounds(float x0, float y0, float x1, float y1, Texture texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength, Color c){
-        renderTexture(x0,y0,x1-x0,y1-y0,0,0,1,1, texture,overrideAspectRatio, c, hasNoise,noiseStrength);
+        renderTexture(x0,y0,x1-x0,y1-y0,0,0,1,1, texture,overrideAspectRatio, c, hasNoise,noiseStrength, vao);
     }
 
     public void renderTextureBounds(float x0, float y0, float x1, float y1, int texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength){
-        renderTexture(x0,y0,x1-x0,y1-y0,0,0,1,1, texture,overrideAspectRatio, Color.WHITE, hasNoise,noiseStrength);
+        renderTexture(x0,y0,x1-x0,y1-y0,0,0,1,1, texture,overrideAspectRatio, Color.WHITE, hasNoise,noiseStrength, vao);
     }
     public void renderTextureBounds(float x0, float y0, float x1, float y1, int texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength, Color c){
-        renderTexture(x0,y0,x1-x0,y1-y0,0,0,1,1, texture,overrideAspectRatio, c, hasNoise,noiseStrength);
+        renderTexture(x0,y0,x1-x0,y1-y0,0,0,1,1, texture,overrideAspectRatio, c, hasNoise,noiseStrength, vao);
     }
 
     /**
@@ -163,19 +194,19 @@ public class Renderer {
      */
 
     public void renderTextureCoordinates(float x, float y, float w, float h, Texture texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength){
-        renderTexture(toNegativeRange(x / width),-toNegativeRange(y / height),(w / width) * 2,(h / height) * -2,0,0,1,1, texture,overrideAspectRatio, Color.WHITE, hasNoise,noiseStrength);
+        renderTexture(toNegativeRange(x / width),-toNegativeRange(y / height),(w / width) * 2,(h / height) * -2,0,0,1,1, texture,overrideAspectRatio, Color.WHITE, hasNoise,noiseStrength, vao);
     }
 
     public void renderTextureCoordinates(float x, float y, float w, float h, Texture texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength, Color c){
-        renderTexture(toNegativeRange(x / width),-toNegativeRange(y / height),(w / width) * 2,(h / height) * -2,0,0,1,1, texture,overrideAspectRatio, c, hasNoise,noiseStrength);
+        renderTexture(toNegativeRange(x / width),-toNegativeRange(y / height),(w / width) * 2,(h / height) * -2,0,0,1,1, texture,overrideAspectRatio, c, hasNoise,noiseStrength, vao);
     }
 
     public void renderTextureCoordinates(float x, float y, float w, float h, int texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength){
-        renderTexture(toNegativeRange(x / width),-toNegativeRange(y / height),(w / width) * 2,(h / height) * -2,0,0,1,1, texture,overrideAspectRatio, Color.WHITE, hasNoise,noiseStrength);
+        renderTexture(toNegativeRange(x / width),-toNegativeRange(y / height),(w / width) * 2,(h / height) * -2,0,0,1,1, texture,overrideAspectRatio, Color.WHITE, hasNoise,noiseStrength, vao);
     }
 
     public void renderTextureCoordinates(float x, float y, float w, float h, int texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength, Color c){
-        renderTexture(toNegativeRange(x / width),-toNegativeRange(y / height),(w / width) * 2,(h / height) * -2,0,0,1,1, texture,overrideAspectRatio, c, hasNoise,noiseStrength);
+        renderTexture(toNegativeRange(x / width),-toNegativeRange(y / height),(w / width) * 2,(h / height) * -2,0,0,1,1, texture,overrideAspectRatio, c, hasNoise,noiseStrength, vao);
     }
 
     public void renderTextureCoordinatesBounds(float x0, float y0, float x1, float y1, Texture texture, boolean overrideAspectRatio, boolean hasNoise, float noiseStrength){
@@ -196,12 +227,16 @@ public class Renderer {
         return (f * 2) - 1;
     }
 
-    private int createVertexArray() {
+    public int createVertexArray(){
+        return createVertexArray(-0.5f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f);
+    }
+
+    public int createVertexArray(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3) {
         float[] vertices = {
-                -0.5f,  0.5f, 0.0f,  0.0f, 1.0f,
-                -0.5f, -0.5f, 0.0f,  0.0f, 0.0f,
-                0.5f, -0.5f, 0.0f,  1.0f, 0.0f,
-                0.5f,  0.5f, 0.0f,  1.0f, 1.0f
+                x0, y0, 0.0f,  0.0f, 1.0f,
+                x1, y1, 0.0f,  0.0f, 0.0f,
+                x2, y2, 0.0f,  1.0f, 0.0f,
+                x3, y3, 0.0f,  1.0f, 1.0f
         };
 
         int[] indices = {

@@ -1,5 +1,6 @@
 package me.redstoner2019.fnaf.game.game;
 
+import me.redstoner2019.audio.Sound;
 import me.redstoner2019.fnaf.FNAFMain;
 import me.redstoner2019.fnaf.Menu;
 import me.redstoner2019.fnaf.game.Distribution;
@@ -12,6 +13,8 @@ import me.redstoner2019.fnaf.game.animatronics.Foxy;
 import me.redstoner2019.fnaf.game.animatronics.Freddy;
 import me.redstoner2019.fnaf.game.cameras.*;
 import me.redstoner2019.fnaf.game.rendering.HallucinationRenderer;
+import me.redstoner2019.graphics.general.Renderer;
+import me.redstoner2019.graphics.general.TextureProvider;
 import me.redstoner2019.util.http.Method;
 import me.redstoner2019.util.http.Requests;
 import org.json.JSONArray;
@@ -27,6 +30,7 @@ import java.util.logging.Handler;
 
 import static me.redstoner2019.fnaf.FNAFMain.*;
 import static org.lwjgl.glfw.GLFW.glfwGetTime;
+import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 
 public class GameManager {
     private static GameManager INSTANCE;
@@ -53,6 +57,9 @@ public class GameManager {
     public int nightNumber = 0;
     public boolean isEndless = false;
     private boolean keysAllowed = false;
+    private boolean goldenFreddy = false;
+    private boolean prepGoldenFreddy = false;
+    private long goldenFreddyAppearTime = 0;
 
     private Thread freddyThread = null;
     private Thread foxyThread = null;
@@ -79,6 +86,14 @@ public class GameManager {
 
     private GameManager(){
 
+    }
+
+    public boolean isGoldenFreddy() {
+        return goldenFreddy;
+    }
+
+    public void setGoldenFreddy(boolean goldenFreddy) {
+        this.goldenFreddy = goldenFreddy;
     }
 
     public boolean isKeysAllowed() {
@@ -178,6 +193,8 @@ public class GameManager {
         if(nightConfiguration.getNightNumber() != 7) nightConfiguration = NightConfiguration.getNight(nightConfiguration.getNightNumber());
         if(nightConfiguration.getNightNumber() == 8) setKeysAllowed(true);
 
+        Sound giggle = new Sound(FNAFMain.sounds.get("giggle.ogg.ogx").getFilepath(),false);
+
         if(nightRunning) return;
         nightStart = System.currentTimeMillis();
         nightRunning = true;
@@ -189,6 +206,10 @@ public class GameManager {
         nightNumber = nightConfiguration.getNightNumber();
         this.hallucinations = 0;
         final int[] night = {nightConfiguration.getNightNumber()};
+
+        goldenFreddy = false;
+        goldenFreddyAppearTime = 0;
+        prepGoldenFreddy = false;
 
         System.out.println("Starting night " + nightConfiguration.getNightNumber());
 
@@ -604,6 +625,7 @@ public class GameManager {
             GameManager gameManager = getInstance();
             Office office = Office.getInstance();
             float deltaTime = 0;
+            boolean previousWasGoldenFreddy = false;
             while (nightRunning) {
                 //try{
                     Thread freddyOfficeEnter = null;
@@ -663,7 +685,11 @@ public class GameManager {
 
                                 if(night[0] == 5) fnafMain.night6Unlocked = true;
                                 if(night[0] == 6) fnafMain.customNightUnlocked = true;
-                                if(night[0] == 7 && finalNightConfiguration.getBonnieAI() + finalNightConfiguration.getChicaAI() + finalNightConfiguration.getFreddyAI() + finalNightConfiguration.getFoxyAI() == 80) fnafMain.ventaBlackNightUnlocked = true;
+                                if(night[0] == 7 && finalNightConfiguration.getBonnieAI() + finalNightConfiguration.getChicaAI() + finalNightConfiguration.getFreddyAI() + finalNightConfiguration.getFoxyAI() == 80
+                                && freddyInterval == 3820
+                                && bonnieInterval == 4970
+                                && chicaInterval == 4980
+                                && foxyInterval == 5010) fnafMain.ventaBlackNightUnlocked = true;
                                 if(night[0] == 8) fnafMain.ventaBlackNightCompleted = true;
                                 System.out.println("Night " + night[0] + " completed");
 
@@ -830,21 +856,39 @@ public class GameManager {
                         if(!ventaNight) foxy.setStalledUntil(System.currentTimeMillis() + random.nextInt(2000,20000));
                         else foxy.setStalledUntil(System.currentTimeMillis() + random.nextInt(1000,6000));
                         System.out.println("Camera Down Trigger");
-                        Thread t = new Thread(() -> {
-                            System.out.println("Starting Cam Down Thread");
-                            synchronized (CAMERA_DOWN_WAIT) {
-                                System.out.println("Camera Down");
-                                CAMERA_DOWN_WAIT.notifyAll();
+                        synchronized (CAMERA_DOWN_WAIT) {
+                            System.out.println("Camera Down");
+                            CAMERA_DOWN_WAIT.notifyAll();
+
+                            if(prepGoldenFreddy){
+                                prepGoldenFreddy = false;
+                                if(!goldenFreddy && !previousWasGoldenFreddy) {
+                                    goldenFreddyAppearTime = System.currentTimeMillis();
+                                    goldenFreddy = true;
+                                }
                             }
-                        });
-                        t.start();
+                            previousWasGoldenFreddy = false;
+                        }
                     } else if(isCameraUp && !lastCameraUp){
                         if(random.nextInt(15) == 1){
                             cameraBlackout = System.currentTimeMillis() + random.nextInt(10000) + 5000;
                         }
+
                         synchronized (CAMERA_UP_WAIT) {
                             CAMERA_UP_WAIT.notifyAll();
+                            if(goldenFreddy) {
+                                goldenFreddy = false;
+                                previousWasGoldenFreddy = true;
+                                goldenFreddyAppearTime = 0;
+                            }
+
+                            System.out.println(previousWasGoldenFreddy);
+                            if(!previousWasGoldenFreddy) {
+                                prepGoldenFreddy = random.nextFloat() < finalNightConfiguration.getGoldenFreddyChance();
+                                if(prepGoldenFreddy) giggle.play();
+                            }
                         }
+
                     } else if(isCameraUp) {
                         lastCameraCheck = System.currentTimeMillis();
                         if(camera.equals(freddy.getCurrentCamera())) freddy.setStalledUntil(System.currentTimeMillis() + 100);
@@ -864,6 +908,23 @@ public class GameManager {
                     if(fnafMain.menu == Menu.CAMERAS) {devices++; usage+=idleUsage;}
 
                     gameManager.devices = devices;
+
+                    if(isGoldenFreddy() && System.currentTimeMillis() - goldenFreddyAppearTime > 1000){
+                        if(!nightRunning || isPowerout) return;
+                        endFreddy();
+                        endBonnie();
+                        endFoxy();
+                        endChica();
+                        goldenFreddy = false;
+                        goldenFreddyAppearTime = 0;
+                        prepGoldenFreddy = false;
+                        nightRunning = false;
+                        deathTo = "Chica";
+
+                        fnafMain.setJumpscareFrame(-1);
+                        fnafMain.setJumpscare("golden.freddy.png");
+                        sendData();
+                    }
 
                     freddyOfficeEnter = new Thread(new Runnable() {
                         @Override
